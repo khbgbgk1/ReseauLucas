@@ -1,0 +1,154 @@
+# ==========================================
+# GITIGNORE pour Unreal Engine (issu de P4)
+# ==========================================
+
+# --- Visual Studio & IDEs ---
+.vs/
+*.csproj
+*.sln
+*.vcxproj
+*.suo
+*.opensdf
+*.sdf
+*.pdb
+*.tmp
+*.mdb
+obj/
+bin/
+*-Debug.*
+.idea/
+!.idea/runConfigurations
+.gradle/
+.vscode/
+*.code-workspace
+
+# --- Git / Versioning ---
+.git/
+.p4config.txt
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.egg-info/
+*.egg
+
+# --- Build & Engine (Generated) ---
+Binaries/
+Intermediate/
+DerivedDataCache/
+Saved/
+LocalBuilds/
+FileOpenOrder/
+HostProject/
+.ue4dependencies
+
+# Spécifique à UBT/Automation
+Engine/Programs/UnrealBuildTool/
+Engine/Programs/*/Saved/
+Engine/Build/Receipts/
+*.uatbuildrecord
+*.csprojAssemblyReference.cache
+
+# --- Contenu Engine fourni (Samples/Templates) ---
+# Utile si vous avez copié le moteur dans votre repo
+Samples/
+FeaturePacks/
+Templates/
+Engine/Documentation/
+
+# --- macOS / Linux / Unix ---
+.DS_Store
+*~
+*.user
+*.pro
+*.pri
+*.kdev4
+*.xcworkspace
+*.xcodeproj
+Makefile
+CMakeLists.txt
+
+# --- Binaires et fichiers de build spécifiques ---
+Engine/Binaries/**/*.version
+Engine/Binaries/**/*.exp
+*.target.xml
+*.exe.config
+*.exe.manifest
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# --- Crash Reports & Logs ---
+crashinfo--*
+logs/
+*.log
+
+# --- Digital Content Creation (DCC) ---
+# Blender
+*.blend1
+*.blend2
+*.blend@
+untitled.blend
+
+# Maya / 3ds Max
+*.ma.swatches
+*.mb.swatches
+incrementalSave/
+scenes/edits/
+*_incrementalSave_*.ma
+*_incrementalSave_*.mb
+*.max.bak
+*.bak
+autoback/
+MaxStart.max
+
+# ZBrush / Houdini / Substance
+*.ZTL.bak
+*.ZPR.bak
+QuickSave*
+backup/
+*.hip.bak
+*.hipnc.bak
+*.hiplc.bak
+*.spp.bak
+*.sbs.bak
+*.sbsar.bak
+
+# Adobe Suite
+*.psd~
+*.ai~
+*.indd~
+*.fla~
+*.aep~
+*.prproj~
+"Adobe After Effects Auto-Save/"
+"Adobe Premiere Pro Auto-Save/"
+"Photoshop Temp*"
+
+# --- Audio (FMOD, Wwise, DAWs) ---
+*.ptx~
+*.ptf~
+"Session File Backups/"
+*.rpp-bak
+*.rpp~
+*.logic/Alternatives/
+*.logic/Backups/
+*.cpr.bak
+*.npr.bak
+*.als~
+*.fspro.bak
+*.fspro~
+*.wproj.bak
+*.wsettings.bak
+
+# --- Patterns Généraux d'Autosave ---
+WIP_*
+AutoSave_*
+autosave*
+Autosave*
+AUTOSAVE*
+AutoBackup*
+auto_save*
+.mayaSwatches/
+incrementalSave*

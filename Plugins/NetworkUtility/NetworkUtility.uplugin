@@ -1,0 +1,24 @@
+{
+	"FileVersion": 3,
+	"Version": 1,
+	"VersionName": "1.0",
+	"FriendlyName": "NetworkUtility",
+	"Description": "NetworkUtility",
+	"Category": "Other",
+	"CreatedBy": "ThibualtBISAGNI",
+	"CreatedByURL": "",
+	"DocsURL": "",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "NetworkUtility",
+			"Type": "Runtime",
+			"LoadingPhase": "Default"
+		}
+	]
+}
