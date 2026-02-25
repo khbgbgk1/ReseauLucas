@@ -37,6 +37,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform DebugRelativeTransform;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game")
+	bool ShowRewindHistory = false;
+	
 	UFUNCTION(Blueprintable)
 	virtual void OnRegister() override;
 	

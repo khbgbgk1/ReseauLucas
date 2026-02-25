@@ -54,7 +54,10 @@ void ULagRewindComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	{
 		RecordMoves();
 		CleanUpHistory();
-		ShowHistory();
+		if (ShowRewindHistory)
+		{
+			ShowHistory();
+		}
 	}
 
 	// ...
