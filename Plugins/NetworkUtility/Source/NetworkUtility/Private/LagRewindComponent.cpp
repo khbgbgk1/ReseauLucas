@@ -6,6 +6,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogLagRewindComponent, Log, All);
 
@@ -18,6 +19,19 @@ ULagRewindComponent::ULagRewindComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	// ...
+}
+
+void ULagRewindComponent::Server_SetShowRewindHistory_Implementation(bool bNewValue)
+{
+	ShowRewindHistory = bNewValue;
+}
+
+void ULagRewindComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// On réplique la variable à tout le monde
+	DOREPLIFETIME(ULagRewindComponent, ShowRewindHistory);
 }
 
 

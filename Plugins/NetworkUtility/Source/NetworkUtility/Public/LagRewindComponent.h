@@ -37,11 +37,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FTransform DebugRelativeTransform;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Game")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	bool ShowRewindHistory = false;
 	
 	UFUNCTION(Blueprintable)
 	virtual void OnRegister() override;
+	
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_SetShowRewindHistory(bool bNewValue);
 	
 #if WITH_EDITOR
 	// Permet de mettre à jour la forme de debug en temps réel quand on change les valeurs dans l'UI
