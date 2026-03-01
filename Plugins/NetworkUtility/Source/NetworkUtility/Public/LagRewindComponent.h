@@ -46,6 +46,9 @@ public:
 	UFUNCTION(Server, Reliable, BlueprintCallable)
 	void Server_SetShowRewindHistory(bool bNewValue);
 	
+	UFUNCTION(Server, Reliable, BlueprintCallable)
+	void Server_UpdateMaximunRecordTime(float NewValue);
+	
 #if WITH_EDITOR
 	// Permet de mettre à jour la forme de debug en temps réel quand on change les valeurs dans l'UI
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -59,6 +62,7 @@ public:
 	// Called every frame
 	TDoubleLinkedList<FSavedMove> SavedMoves;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	float MaximumRecordTime = 2.0f;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;

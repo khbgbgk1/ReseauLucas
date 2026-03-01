@@ -26,12 +26,18 @@ void ULagRewindComponent::Server_SetShowRewindHistory_Implementation(bool bNewVa
 	ShowRewindHistory = bNewValue;
 }
 
+void ULagRewindComponent::Server_UpdateMaximunRecordTime_Implementation(float NewValue)
+{
+	MaximumRecordTime = NewValue;
+}
+
 void ULagRewindComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	// On réplique la variable à tout le monde
 	DOREPLIFETIME(ULagRewindComponent, ShowRewindHistory);
+	DOREPLIFETIME(ULagRewindComponent, MaximumRecordTime);
 }
 
 
