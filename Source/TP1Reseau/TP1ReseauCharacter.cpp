@@ -76,16 +76,53 @@ void ATP1ReseauCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATP1ReseauCharacter::Look);
 		
 		// Skin
+		if (!SkinComponent)
+		{
+			SkinComponent = FindComponentByClass<USkinComponent>();
+			if (SkinComponent)
+			{
+				UE_LOG(LogTP1ReseauCharacter, Log, TEXT("SetupPlayerInputComponent: RÉCUPÉRATION RÉUSSIE : SkinComponent trouvé via FindComponentByClass. Nom : %s"), *SkinComponent->GetName());
+			}
+			else
+			{
+				UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("ÉCHEC TOTAL : Aucun USkinComponent n'est attaché à cet acteur !"));
+			}
+		}
 		if (SkinComponent)
 		{
 			EnhancedInputComponent->BindAction(ChangeSkinAction, ETriggerEvent::Triggered, SkinComponent, &USkinComponent::DoSkinChange);
+		} else {
+			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("SetupPlayerInputComponent: SkinComponent manquant."));
+            			
+		}
+		
+		//ShowMouse
+		if (ShowMouseAction)
+		{
+			EnhancedInputComponent->BindAction(ShowMouseAction, ETriggerEvent::Started, this, &ATP1ReseauCharacter::ShowMouse);
+			//EnhancedInputComponent->BindAction(ShowMouseAction, ETriggerEvent::Completed, this, &ATP1ReseauCharacter::HideMouse);
+		}else {
+			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("SetupPlayerInputComponent: ShowMouseAction manquant."));
+            			
+		}
+		
+		// Fire with weapon
+		if (FireAction)
+		{
+			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Started, this, &ATP1ReseauCharacter::DoFire);
+			EnhancedInputComponent->BindAction(FireAction, ETriggerEvent::Completed, this, &ATP1ReseauCharacter::StopFiring);
+		}else {
+			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("SetupPlayerInputComponent: ShowMouseAction manquant."));
+            			
 		}
 		
 	}
 	else
 	{
-		UE_LOG(LogTP1Reseau, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		UE_LOG(LogTP1ReseauCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+	
+	
 }
 
 void ATP1ReseauCharacter::Move(const FInputActionValue& Value)
@@ -105,6 +142,52 @@ void ATP1ReseauCharacter::Look(const FInputActionValue& Value)
 	// route the input
 	DoLook(LookAxisVector.X, LookAxisVector.Y);
 }
+
+void ATP1ReseauCharacter::ShowMouse()
+{
+	bValueShowNouse = !bValueShowNouse;
+	if (bValueShowNouse)
+	{
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			PC->bShowMouseCursor = true;
+			PC->bEnableClickEvents = true;
+			PC->bEnableMouseOverEvents = true;
+
+			FInputModeGameAndUI InputMode;
+			InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+			InputMode.SetHideCursorDuringCapture(false);
+        
+			PC->SetInputMode(InputMode);
+		}
+	} else
+	{
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			PC->bShowMouseCursor = false;
+			PC->bEnableClickEvents = false;
+			PC->bEnableMouseOverEvents = false;
+
+			FInputModeGameOnly InputMode;
+			PC->SetInputMode(InputMode);
+		}
+	}
+	
+}
+
+void ATP1ReseauCharacter::HideMouse()
+{
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		PC->bShowMouseCursor = false;
+		PC->bEnableClickEvents = false;
+		PC->bEnableMouseOverEvents = false;
+
+		FInputModeGameOnly InputMode;
+		PC->SetInputMode(InputMode);
+	}
+}
+
 
 void ATP1ReseauCharacter::DoMove(float Right, float Forward)
 {
@@ -148,9 +231,46 @@ void ATP1ReseauCharacter::DoJumpEnd()
 	StopJumping();
 }
 
+void ATP1ReseauCharacter::DoFire()
+{
+	UE_LOG(LogTP1ReseauCharacter, Log, TEXT("DoFire: Start Fire !"));
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StarFiringProjectile();
+	}
+}
+
+void ATP1ReseauCharacter::StopFiring()
+{
+	UE_LOG(LogTP1ReseauCharacter, Log, TEXT("StopFiring: EndFiring !"));
+	if (CurrentWeapon)
+	{
+		CurrentWeapon->StopFiringProjectile();
+	}
+}
+
 void ATP1ReseauCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	
+	if (SkinComponent == nullptr)
+	{
+		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("BeginPlay: SkinComponent est NULL dès le BeginPlay !"));
+		// Tentative de récupération si le constructeur a échoué à lier le composant
+		SkinComponent = FindComponentByClass<USkinComponent>();
+		if (SkinComponent)
+		{
+			UE_LOG(LogTP1ReseauCharacter, Log, TEXT("BeginPlay: RÉCUPÉRATION RÉUSSIE : SkinComponent trouvé via FindComponentByClass. Nom : %s"), *SkinComponent->GetName());
+		}
+		else
+		{
+			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("BeginPlay: ÉCHEC TOTAL : Aucun USkinComponent n'est attaché à cet acteur !"));
+		}
+	}
+	else
+	{
+		UE_LOG(LogTP1ReseauCharacter, Log, TEXT("BeginPlay : SkinComponent valide : %s"), *SkinComponent->GetName());
+	}
 }
 
 void ATP1ReseauCharacter::OnRep_PlayerState()
@@ -162,8 +282,14 @@ void ATP1ReseauCharacter::OnRep_PlayerState()
 	{
 		if (SkinComponent)
 		{
-			UE_LOG(LogTP1ReseauCharacter, Log, TEXT("[Client] OnRep_PlayerState : Synchronisation du skin %d"), PS->SelectedSkin);
-			SkinComponent->SetSkin(PS->SelectedSkin);
+			USkin_GameState_Component* PS_SkinComp = PS->FindComponentByClass<USkin_GameState_Component>();
+       
+			if (PS_SkinComp && SkinComponent)
+			{
+				UE_LOG(LogTP1ReseauCharacter, Log, TEXT("[Client] OnRep_PlayerState : Synchronisation via Component, Skin %d"), PS_SkinComp->SelectedSkin);
+          
+				SkinComponent->SetSkin(PS_SkinComp->SelectedSkin);
+			}
 		}
 		
 		else

@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
 #include "SkinComponent.h"
+#include "WeaponGeneral.h"
 #include "TP1ReseauCharacter.generated.h"
 
 class USpringArmComponent;
@@ -52,6 +53,12 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* ChangeSkinAction;
+	
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* ShowMouseAction;
+	
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* FireAction;
 
 public:
 
@@ -69,6 +76,13 @@ protected:
 
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+	
+	void ShowMouse();
+	
+	void HideMouse();
+	
+	UPROPERTY()
+	bool bValueShowNouse = false;
 	
 	virtual void BeginPlay() override;
 
@@ -92,6 +106,14 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	USkinComponent* SkinComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon")
+	AWeaponGeneral* CurrentWeapon;
+	
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void DoFire();
+	UFUNCTION(BlueprintCallable, Category="Input")
+	virtual void StopFiring();
 	
 	virtual void OnRep_PlayerState() override;
 

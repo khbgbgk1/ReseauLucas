@@ -2,7 +2,10 @@
 
 
 #include "LobyGameState.h"
+#include "TP1ReseauCharacter.h"
 #include "Net/UnrealNetwork.h"
+
+DEFINE_LOG_CATEGORY_STATIC(LogLobyGameState, Log, All);
 
 void ALobyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -13,16 +16,7 @@ void ALobyGameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 	DOREPLIFETIME(ALobyGameState, LevelStartTime);
 }
 
-// void ALobyGameState::SyncServerTime(float ClientTimestamp, float ServerTimestamp)
-// {
-// 	float CurrentTime = GetWorld()->GetTimeSeconds();
-// 	float RTT = CurrentTime - ClientTimestamp;
-// 	float AdjustedServerTime = ServerTimestamp + (RTT * 0.5f);
-//     
-// 	ServerClientDelta = AdjustedServerTime - CurrentTime;
-// }
-
-// float ALobyGameState::GetSyncedServerTime() const
-// {
-// 	return GetWorld()->GetTimeSeconds() + ServerClientDelta;
-// }
+ALobyGameState::ALobyGameState()
+{
+	RewindNetworkManager = CreateDefaultSubobject<URewindNetworkManagerGameStateComponent>(TEXT("RewindNetworkManager"));
+}

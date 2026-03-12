@@ -3,7 +3,7 @@
 
 #include "GameMode/LobyGameMode.h"
 
-#include "GenericTeamAgentInterface.h"
+//#include "GenericTeamAgentInterface.h"
 #include "LobyGameState.h"
 #include "TP1PlayerState.h"
 #include "TP1ReseauCharacter.h"
@@ -74,7 +74,11 @@ FString ALobyGameMode::InitNewPlayer(
 
 		if (PS)
 		{
-			PS->SelectedSkin = SkinIndex;
+			if (USkin_GameState_Component* SkinComp = PS->FindComponentByClass<USkin_GameState_Component>())
+			{
+				SkinComp->SelectedSkin = SkinIndex;
+				UE_LOG(LogLobyGameMode, Log, TEXT("Skin %d appliqué au SkinComponent du PlayerState"), SkinIndex);
+			}
 		}
 		
 	}

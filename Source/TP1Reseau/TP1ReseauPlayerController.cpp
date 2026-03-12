@@ -79,8 +79,16 @@ void ATP1ReseauPlayerController::OnPossess(APawn* InPawn)
 	ATP1PlayerState* PS = GetPlayerState<ATP1PlayerState>();
 	if (CurrentPlayer && PS && CurrentPlayer->SkinComponent)
 	{
-		CurrentPlayer->SkinComponent->SetSkin(PS->SelectedSkin);
-		UE_LOG(LogTP1ReseauPlayerController, Log, TEXT("OnPossess: SkinSet"));
+		// On cherche les composants sur les deux entités
+		USkinComponent* CharSkinComp = CurrentPlayer->SkinComponent;
+		USkin_GameState_Component* PSSkinComp = PS->FindComponentByClass<USkin_GameState_Component>();
+
+		if (CharSkinComp && PSSkinComp)
+		{
+			// Le serveur définit le skin du personnage en fonction de la donnée stockée dans le PS
+			CharSkinComp->SetSkin(PSSkinComp->SelectedSkin);
+			UE_LOG(LogTP1ReseauPlayerController, Log, TEXT("OnPossess: Skin synchronisé depuis le PlayerState Component"));
+		}
 		
 	}
 

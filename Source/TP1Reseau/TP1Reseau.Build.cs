@@ -18,7 +18,9 @@ public class TP1Reseau : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
+			"Slate",
+			"NetworkUtility",
+			"SkinManagerPlugin"
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });

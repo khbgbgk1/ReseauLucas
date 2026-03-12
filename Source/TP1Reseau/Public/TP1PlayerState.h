@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerState.h"
+#include "Skin_GameState_Component.h"
 #include "TP1PlayerState.generated.h"
 
 /**
@@ -14,13 +15,12 @@ class TP1RESEAU_API ATP1PlayerState : public APlayerState
 {
 	GENERATED_BODY()
 public:
+	ATP1PlayerState();
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	USkin_GameState_Component* Skin_GS_Component;
 	
 	virtual void PostNetInit() override;
-	
-	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Skin")
-	int32 SelectedSkin = 0;
-
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	
 	virtual void CopyProperties(APlayerState* PlayerState) override;
 };

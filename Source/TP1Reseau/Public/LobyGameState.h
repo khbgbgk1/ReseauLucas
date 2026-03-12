@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
+#include "RewindNetworkManagerGameStateComponent.h"
 #include "LobyGameState.generated.h"
 
 /**
@@ -15,6 +16,9 @@ class TP1RESEAU_API ALobyGameState : public AGameState
 	GENERATED_BODY()
 	
 public:
+	
+	ALobyGameState();
+	
 	// Variable répliquée qui contient le temps
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Lobby")
 	float RemainingTime = 20.0f;
@@ -22,13 +26,7 @@ public:
 	UPROPERTY(Replicated)
 	float LevelStartTime = 0.0f;
 	
-
-	// Configuration de la réplication
-	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-	
-	
-    
-	// Heure précise synchronisée (utilisable par l'UI)
-	
-	//float GetSyncedServerTime() const;
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Network", meta = (AllowPrivateAccess = "true"))
+	URewindNetworkManagerGameStateComponent* RewindNetworkManager;
 };
