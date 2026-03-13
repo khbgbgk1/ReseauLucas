@@ -107,7 +107,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	USkinComponent* SkinComponent;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Weapon")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_CurrentWeapon, Category="Weapon")
 	AWeaponGeneral* CurrentWeapon;
 	
 	UFUNCTION(BlueprintCallable, Category="Input")
@@ -116,6 +116,11 @@ public:
 	virtual void StopFiring();
 	
 	virtual void OnRep_PlayerState() override;
+	
+	UFUNCTION(BlueprintCallable)
+	void OnRep_CurrentWeapon();
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 

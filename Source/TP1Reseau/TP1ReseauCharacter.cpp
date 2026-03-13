@@ -12,6 +12,7 @@
 #include "InputActionValue.h"
 #include "TP1PlayerState.h"
 #include "TP1Reseau.h"
+#include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTP1ReseauCharacter, Log, All);
 
@@ -237,6 +238,9 @@ void ATP1ReseauCharacter::DoFire()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->StarFiringProjectile();
+	} else
+	{
+		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("DoFire:CurrentWeapon nullptr"));
 	}
 }
 
@@ -246,6 +250,9 @@ void ATP1ReseauCharacter::StopFiring()
 	if (CurrentWeapon)
 	{
 		CurrentWeapon->StopFiringProjectile();
+	}else
+	{
+		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("StopFiring:CurrentWeapon nullptr"));
 	}
 }
 
@@ -301,4 +308,15 @@ void ATP1ReseauCharacter::OnRep_PlayerState()
 	{
 		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("OnRep_PlayerState : PlayerState not a ATP1PlayerState"));
 	}
+}
+void ATP1ReseauCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(ATP1ReseauCharacter, CurrentWeapon);
+}
+
+void ATP1ReseauCharacter::OnRep_CurrentWeapon()
+{
+	// CurrentWeapon est maintenant valide sur le client
+	UE_LOG(LogTP1ReseauCharacter, Log, TEXT("OnRep_CurrentWeapon: arme reçue par réplication"));
 }

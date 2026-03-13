@@ -10,6 +10,7 @@
 #include "Blueprint/UserWidget.h"
 #include "TP1Reseau.h"
 #include "TP1ReseauCharacter.h"
+#include "Net/UnrealNetwork.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTP1ReseauPlayerController, Log, All);

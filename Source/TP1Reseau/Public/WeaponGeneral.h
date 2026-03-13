@@ -45,4 +45,12 @@ public:
 	void StopFiringProjectile();
 	UFUNCTION(BlueprintCallable)
 	void FireOneProjectile();
+	
+private:
+	// RPC Client → Serveur pour démarrer/stopper le tir
+	UFUNCTION(Server, Reliable)
+	void Server_StartFiring();
+
+	UFUNCTION(Server, Reliable)
+	void Server_StopFiring();
 };

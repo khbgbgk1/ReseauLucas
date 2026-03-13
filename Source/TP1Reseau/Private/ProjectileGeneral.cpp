@@ -21,6 +21,8 @@ AProjectileGeneral::AProjectileGeneral()
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
 	ProjectileMovement->ProjectileGravityScale = 0.0f;
 	InitialLifeSpan = 5.0f;
+	
+	bReplicates = true;
 
 }
 

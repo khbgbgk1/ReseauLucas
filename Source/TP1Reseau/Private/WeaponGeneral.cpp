@@ -11,6 +11,7 @@ AWeaponGeneral::AWeaponGeneral()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
 	
 	DefaultRoot = CreateDefaultSubobject<USceneComponent>(TEXT("DefaultRoot"));
 	RootComponent = DefaultRoot;
@@ -36,34 +37,52 @@ void AWeaponGeneral::Tick(float DeltaTime)
 
 void AWeaponGeneral::StarFiringProjectile()
 {
-	if (GetWorld())
-	{
-		FireOneProjectile();
+	if (!GetWorld()) return;
 
-		// On lance le timer pour les tirs suivants
+	if (HasAuthority())
+	{
+		// On est le serveur : on gère le timer directement
+		FireOneProjectile();
+		UE_LOG(LogWeaponGeneral, Log, TEXT("StarFiringProjectile called - HasAuthority: %s"), HasAuthority() ? TEXT("true") : TEXT("false"));
 		GetWorldTimerManager().SetTimer(
-			TimerHandle_Fire, 
-			this, 
-			&AWeaponGeneral::FireOneProjectile, 
-			FireRate, 
+			TimerHandle_Fire,
+			this,
+			&AWeaponGeneral::FireOneProjectile,
+			FireRate,
 			true
 		);
-        
-		UE_LOG(LogWeaponGeneral, Log, TEXT("StarFiringProjectile: Started Firing in weapon"));
 	}
-}
+	else
+	{
+		// On est un client : on demande au serveur de tirer
+		UE_LOG(LogWeaponGeneral, Log, TEXT("StarFiringProjectile called to server"));
+		Server_StartFiring();
+	}}
+
+
 
 void AWeaponGeneral::StopFiringProjectile()
 {
-	if (GetWorld())
+	if (!GetWorld()) return;
+
+	if (HasAuthority())
 	{
+		UE_LOG(LogWeaponGeneral, Log, TEXT("StopFiringProjectile called"));
 		GetWorldTimerManager().ClearTimer(TimerHandle_Fire);
-		UE_LOG(LogWeaponGeneral, Log, TEXT("StopFiringProjectile: Stopped Firing in weapon"));
+	}
+	else
+	{
+		UE_LOG(LogWeaponGeneral, Log, TEXT("StopFiringProjectile called to server"));
+		Server_StopFiring();
 	}
 }
 
 void AWeaponGeneral::FireOneProjectile()
 {
+	if (!HasAuthority())
+	{
+		return;
+	}
 	if (GetWorld() && ProjectileClass)
 	{
 		
@@ -98,3 +117,12 @@ void AWeaponGeneral::FireOneProjectile()
 	}
 }
 
+void AWeaponGeneral::Server_StartFiring_Implementation()
+{
+	StarFiringProjectile();
+}
+
+void AWeaponGeneral::Server_StopFiring_Implementation()
+{
+	StopFiringProjectile();
+}
