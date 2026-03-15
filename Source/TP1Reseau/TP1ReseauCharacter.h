@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "SkinComponent.h"
 #include "WeaponGeneral.h"
+#include "DamageableComponent.h"
 #include "TP1ReseauCharacter.generated.h"
 
 class USpringArmComponent;
@@ -64,6 +65,19 @@ public:
 
 	/** Constructor */
 	ATP1ReseauCharacter();	
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	UDamageableComponent* DamageableComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_Health, Category = "Gameplay")
+	int CurrentHealth = 5;
+
+	/** Santé Max */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
+	int MaxHealth = 5;
+
+	UFUNCTION(BlueprintCallable, Category = "Gameplay")
+	void ApplyDamageOnPlayer(int Damages, AActor* DamageInstigator);
 
 protected:
 
@@ -85,6 +99,20 @@ protected:
 	bool bValueShowNouse = false;
 	
 	virtual void BeginPlay() override;
+	
+	
+	//LifeCycle
+	UFUNCTION(BlueprintCallable)
+	void Die();
+	
+	UFUNCTION()
+	void OnRep_Health();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_RequestRespawn();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyDamage(int Damages, AActor* DamageInstigator);
 
 public:
 

@@ -56,6 +56,15 @@ void AWeaponGeneral::StarFiringProjectile()
 	{
 		// On est un client : on demande au serveur de tirer
 		UE_LOG(LogWeaponGeneral, Log, TEXT("StarFiringProjectile called to server"));
+		FireOneProjectile();
+		UE_LOG(LogWeaponGeneral, Log, TEXT("StarFiringProjectile called - HasAuthority: %s"), HasAuthority() ? TEXT("true") : TEXT("false"));
+		GetWorldTimerManager().SetTimer(
+			TimerHandle_Fire,
+			this,
+			&AWeaponGeneral::FireOneProjectile,
+			FireRate,
+			true
+		);
 		Server_StartFiring();
 	}}
 
@@ -73,16 +82,17 @@ void AWeaponGeneral::StopFiringProjectile()
 	else
 	{
 		UE_LOG(LogWeaponGeneral, Log, TEXT("StopFiringProjectile called to server"));
+		GetWorldTimerManager().ClearTimer(TimerHandle_Fire);
 		Server_StopFiring();
 	}
 }
 
 void AWeaponGeneral::FireOneProjectile()
 {
-	if (!HasAuthority())
-	{
-		return;
-	}
+	// if (!HasAuthority())
+	// {
+	// 	return;
+	// }
 	if (GetWorld() && ProjectileClass)
 	{
 		
@@ -113,6 +123,8 @@ void AWeaponGeneral::FireOneProjectile()
 		{
 			// Log de succès
 			UE_LOG(LogWeaponGeneral, Log, TEXT("Projectile Spawned!"));
+			APawn* MyPawn = Cast<APawn>(GetOwner());
+			SpawnedProjectile->FiringPawn = MyPawn;
 		}
 	}
 }

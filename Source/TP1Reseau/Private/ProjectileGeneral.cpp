@@ -3,6 +3,9 @@
 
 #include "ProjectileGeneral.h"
 
+#include "DamageableComponent.h"
+#include "Net/UnrealNetwork.h"
+
 DEFINE_LOG_CATEGORY_STATIC(LogProjectileGeneral, Log, All);
 
 
@@ -23,6 +26,18 @@ AProjectileGeneral::AProjectileGeneral()
 	InitialLifeSpan = 5.0f;
 	
 	bReplicates = true;
+	
+	SphereColision->SetCollisionObjectType(ECC_WorldDynamic);
+	// On ignore toutes els collisions
+	SphereColision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	//On autorise  l'Overlap avec les Pawns
+	SphereColision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	// On bloque sur le décor (Static)
+	SphereColision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
+	//On active la génération d'événements d'overlap
+	SphereColision->SetGenerateOverlapEvents(true);
+	
+	SphereColision->OnComponentBeginOverlap.AddDynamic(this, &AProjectileGeneral::OnProjectileOverlap);
 
 }
 
@@ -40,3 +55,58 @@ void AProjectileGeneral::Tick(float DeltaTime)
 
 }
 
+void AProjectileGeneral::CheckAndHideIfOwner()
+{
+	if (GetNetMode() == NM_DedicatedServer) return;
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC && PC->GetPawn() && FiringPawn == PC->GetPawn())
+	{
+		UE_LOG(LogProjectileGeneral, Display, TEXT("C'est mon tir ! Cache-toi."));
+		SetActorHiddenInGame(true);
+		SetActorEnableCollision(false);
+	}
+}
+
+void AProjectileGeneral::OnRep_FiringPawn()
+{
+	UE_LOG(LogProjectileGeneral, Log, TEXT("OnRep_FiringPawn reçu !"));
+	CheckAndHideIfOwner();
+}
+
+void AProjectileGeneral::OnProjectileOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	// On veut que le code s'active s'il touche bien un actor
+	if (!OtherActor || OtherActor == FiringPawn) return;
+	
+	// On veut que seul le client qui a tiré envoie l'information de hit
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC && PC->GetPawn() == FiringPawn)
+	{
+		// 3. On cherche le composant Damageable sur la victime
+		UDamageableComponent* DamageComp = OtherActor->FindComponentByClass<UDamageableComponent>();
+        
+		if (DamageComp)
+		{
+			UE_LOG(LogProjectileGeneral, Log, TEXT("HIT DETECTED : Envoi de la demande de dégâts par le client tireur."));
+            
+			// 4. On exécute la fonction du composant
+			// Note : Comme vu précédemment, le composant trigger l'event, 
+			// qui appelle ApplyDomageOnPlayer dans le Character, qui fait le RPC Serveur.
+			DamageComp->ApplyDomage(Degats, FiringPawn);
+
+			// 5. On détruit le projectile après l'impact
+			Destroy();
+		} else
+		{
+			UE_LOG(LogProjectileGeneral, Warning, TEXT("[%s] COLLISION avec [%s] : L'acteur n'a pas de DamageableComponent."), 
+				   *GetName(), *OtherActor->GetName());
+		}
+	}
+}
+
+void AProjectileGeneral::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AProjectileGeneral, FiringPawn);
+}

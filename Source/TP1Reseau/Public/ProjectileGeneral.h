@@ -25,10 +25,26 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	class UProjectileMovementComponent* ProjectileMovement;
+	
+	UPROPERTY(ReplicatedUsing = OnRep_FiringPawn)
+	APawn* FiringPawn;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite,	 Category = "Gameplay")
+	int Degats = 5;
+	
+	UFUNCTION()
+	void OnRep_FiringPawn();
+	
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	void CheckAndHideIfOwner();
+	
+	UFUNCTION()
+	void OnProjectileOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 public:	
 	// Called every frame

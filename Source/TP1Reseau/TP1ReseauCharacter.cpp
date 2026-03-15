@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 #include "TP1PlayerState.h"
+#include "GameFramework/GameModeBase.h"
 #include "TP1Reseau.h"
 #include "Net/UnrealNetwork.h"
 
@@ -52,6 +53,11 @@ ATP1ReseauCharacter::ATP1ReseauCharacter()
 	FollowCamera->bUsePawnControlRotation = false;
 	
 	SkinComponent = CreateDefaultSubobject<USkinComponent>(TEXT("SkinComponent"));
+	
+	//Composant pour pouvoir recevoir des dégats
+	DamageableComponent = CreateDefaultSubobject<UDamageableComponent>(TEXT("DamageableComponent"));
+	
+	CurrentHealth = MaxHealth;
     
 	// Si tu as utilisé COND_OwnerOnly précédemment, assure-toi que le composant réplique
 	SkinComponent->SetIsReplicated(true);
@@ -278,6 +284,18 @@ void ATP1ReseauCharacter::BeginPlay()
 	{
 		UE_LOG(LogTP1ReseauCharacter, Log, TEXT("BeginPlay : SkinComponent valide : %s"), *SkinComponent->GetName());
 	}
+	
+	if (DamageableComponent)
+	{
+		
+		DamageableComponent->OnDamageEvent.AddDynamic(this, &ATP1ReseauCharacter::ApplyDamageOnPlayer);
+        
+		UE_LOG(LogTP1ReseauCharacter, Log, TEXT("BeginPlay: Liaison DamageableComponent réussie !"));
+	}
+	else
+	{
+		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("BeginPlay: DamageableComponent est manquant !"));
+	}
 }
 
 void ATP1ReseauCharacter::OnRep_PlayerState()
@@ -313,10 +331,76 @@ void ATP1ReseauCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ATP1ReseauCharacter, CurrentWeapon);
+	DOREPLIFETIME(ATP1ReseauCharacter, CurrentHealth);
 }
 
 void ATP1ReseauCharacter::OnRep_CurrentWeapon()
 {
 	// CurrentWeapon est maintenant valide sur le client
 	UE_LOG(LogTP1ReseauCharacter, Log, TEXT("OnRep_CurrentWeapon: arme reçue par réplication"));
+}
+
+void ATP1ReseauCharacter::OnRep_Health()
+{
+	// Lien a faire avec UI pottentiel
+	UE_LOG(LogTP1ReseauCharacter, Log, TEXT("Client: Santé mise à jour : %d"), CurrentHealth);
+}
+
+void ATP1ReseauCharacter::Server_RequestRespawn_Implementation()
+{
+	Die();
+}
+
+void ATP1ReseauCharacter::Die()
+{
+	if (!HasAuthority())
+	{
+		Server_RequestRespawn();
+		return;
+	}
+	else
+	{
+		UE_LOG(LogTP1ReseauCharacter, Log, TEXT("CHARACTER DEAD: %s"), *GetName());
+
+		//A REVOIR
+		if (AGameModeBase* GM = GetWorld()->GetAuthGameMode())
+		{
+			GM->RestartPlayer(GetController());
+		}
+    
+		//ATENTION DESTROY Serveur
+		Destroy(); // Détruit le corps actuel
+	}
+}
+
+void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInstigator)
+{
+	if (!HasAuthority())
+	{
+		Server_ApplyDamage_Implementation(Damages, DamageInstigator);
+	}
+	else {
+
+		if (CurrentHealth <= 0)
+		{
+		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("Santé déjà à 0 ou moins, de %s : %d"), *GetName(), CurrentHealth);
+			return;
+		}
+
+		CurrentHealth = FMath::Max(0, CurrentHealth - Damages);
+		UE_LOG(LogTP1ReseauCharacter, Log, TEXT("Santé de %s : %d"), *GetName(), CurrentHealth);
+
+		OnRep_Health(); //Pour le serveur
+		
+		if (CurrentHealth <= 0)
+		{
+			Die();
+		}
+	}
+}
+
+void ATP1ReseauCharacter::Server_ApplyDamage_Implementation(int32 Damages, AActor* DamageInstigator)
+{
+	//VERIFIER SI la scene est bonne avant de valider le kill
+	ApplyDamageOnPlayer(Damages, DamageInstigator);
 }
