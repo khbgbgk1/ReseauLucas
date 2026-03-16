@@ -50,3 +50,67 @@ void AGameMapGameMode::StartMatchNow()
 		}
 	}
 }
+
+void AGameMapGameMode::RequestPlayerRespawn(AController* Controller)
+{
+	if (!Controller)
+	{
+		UE_LOG(LogGameMapGameMode, Log, TEXT("RequestPlayerRespawn: controller non valide."));
+		return;
+
+	}
+	//On récupère l'actuel Pawn possédé par ce contrôleur
+	APawn* OldPawn = Controller->GetPawn();
+	Controller->UnPossess();
+	
+	if (OldPawn)
+	{
+		// On rend invisible l<Anien corp
+		OldPawn->SetActorEnableCollision(false);
+		OldPawn->Destroy(); 
+	}
+	
+	AActor* SpawnPoint = Controller->StartSpot.Get();
+	if (!SpawnPoint)
+	{
+		SpawnPoint = FindPlayerStart(Controller);
+		Controller->StartSpot = SpawnPoint;
+	}
+	
+	FVector SpawnLocation = FVector::ZeroVector;
+	FRotator SpawnRotation = FRotator::ZeroRotator;
+
+	if (SpawnPoint)
+	{
+		SpawnLocation = SpawnPoint->GetActorLocation();
+		SpawnRotation = SpawnPoint->GetActorRotation();
+	}
+
+	//On Restart le joueur
+	//RestartPlayer(Controller);
+
+	// Une fois le nouveau Pawn spawn et possédé, on destroy l'ancien
+	UClass* PawnClass = GetDefaultPawnClassForController(Controller);
+	if (PawnClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+		APawn* NewPawn = GetWorld()->SpawnActor<APawn>(PawnClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+		if (NewPawn)
+		{
+			Controller->Possess(NewPawn);
+			if (OldPawn)
+			{
+				OldPawn->Destroy();
+				UE_LOG(LogGameMapGameMode, Log, TEXT("RequestPlayerRespawn: SUCCESS | Controller: [%s] | New Pawn: [%s] | At: [%s] | Loc: %s"), 
+				*Controller->GetName(), 
+				*GetNameSafe(NewPawn),
+				*GetNameSafe(SpawnPoint),
+				*SpawnLocation.ToString());
+			}
+
+		}
+	}
+}

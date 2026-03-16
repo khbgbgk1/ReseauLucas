@@ -158,3 +158,14 @@ void ATP1ReseauPlayerController::Client_HideLoadingScreen_Implementation()
 		// bShowMouseCursor = false;
 	}
 }
+
+void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill)
+{
+	if (!CharacterToKill)
+	{
+			UE_LOG(LogTP1ReseauPlayerController, Log, TEXT("Server_ApplyDamage_Implementation: CharacterToKill non valide"));
+		return;
+	}
+	//VERIFIER SI la scene est bonne avant de valider le kill
+	CharacterToKill->ApplyDamageOnPlayer(Damages, DamageInstigator);
+}

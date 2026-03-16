@@ -110,9 +110,6 @@ protected:
 	
 	UFUNCTION(Server, Reliable)
 	void Server_RequestRespawn();
-	
-	UFUNCTION(Server, Reliable)
-	void Server_ApplyDamage(int Damages, AActor* DamageInstigator);
 
 public:
 

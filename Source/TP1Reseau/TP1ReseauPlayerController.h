@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "TP1ReseauCharacter.h"
 #include "GameFramework/PlayerController.h"
 #include "TP1ReseauPlayerController.generated.h"
 
@@ -31,6 +32,9 @@ public:
 
 	UFUNCTION(Client, Reliable)
 	void Client_HideLoadingScreen();
+	
+	UFUNCTION(Server, Reliable)
+	void Server_ApplyDamage(int Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill);
 protected:
 
 	/** Input Mapping Contexts */

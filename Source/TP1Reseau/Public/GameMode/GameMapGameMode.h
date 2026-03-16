@@ -17,10 +17,14 @@ class TP1RESEAU_API AGameMapGameMode : public AGameMode
 public:
 	AGameMapGameMode();
 	
-	int NbPlayerExpect = 3 ;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int NbPlayerExpect = 2 ;
 	
 	virtual void PostLogin(APlayerController* NewPlayer) override;
 	
 	UFUNCTION()
 	void StartMatchNow();
+	
+	UFUNCTION(blueprintCallable)
+	void RequestPlayerRespawn(AController* Controller);
 };

@@ -13,6 +13,8 @@
 #include "TP1PlayerState.h"
 #include "GameFramework/GameModeBase.h"
 #include "TP1Reseau.h"
+#include "TP1ReseauPlayerController.h"
+#include "GameMode/GameMapGameMode.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogTP1ReseauCharacter, Log, All);
@@ -361,15 +363,12 @@ void ATP1ReseauCharacter::Die()
 	else
 	{
 		UE_LOG(LogTP1ReseauCharacter, Log, TEXT("CHARACTER DEAD: %s"), *GetName());
-
-		//A REVOIR
-		if (AGameModeBase* GM = GetWorld()->GetAuthGameMode())
+		
+		if (AGameMapGameMode* GM = GetWorld()->GetAuthGameMode<AGameMapGameMode>())
 		{
-			GM->RestartPlayer(GetController());
+			UE_LOG(LogTP1ReseauCharacter, Log, TEXT("Die : On appelle RequestPlayerRespawn sur le GameMode de type AGameMapGameMode"));
+			GM->RequestPlayerRespawn(GetController());
 		}
-    
-		//ATENTION DESTROY Serveur
-		Destroy(); // Détruit le corps actuel
 	}
 }
 
@@ -377,7 +376,13 @@ void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInsti
 {
 	if (!HasAuthority())
 	{
-		Server_ApplyDamage_Implementation(Damages, DamageInstigator);
+		APlayerController* LocalPC = GetWorld()->GetFirstPlayerController();
+		ATP1ReseauPlayerController* OwnerSessionPC = Cast<ATP1ReseauPlayerController>(LocalPC);
+		if (OwnerSessionPC)
+		{
+			UE_LOG(LogTP1ReseauCharacter, Log, TEXT("ApplyDamageOnPlayer : On appelle la fonction sur le PC du Client en cours pour que le serveur puisse accepter la demande"));
+			OwnerSessionPC->Server_ApplyDamage(Damages, DamageInstigator, this);
+		}
 	}
 	else {
 
@@ -397,10 +402,4 @@ void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInsti
 			Die();
 		}
 	}
-}
-
-void ATP1ReseauCharacter::Server_ApplyDamage_Implementation(int32 Damages, AActor* DamageInstigator)
-{
-	//VERIFIER SI la scene est bonne avant de valider le kill
-	ApplyDamageOnPlayer(Damages, DamageInstigator);
 }

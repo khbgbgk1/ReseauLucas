@@ -90,12 +90,10 @@ void AProjectileGeneral::OnProjectileOverlap(UPrimitiveComponent* OverlappedComp
 		{
 			UE_LOG(LogProjectileGeneral, Log, TEXT("HIT DETECTED : Envoi de la demande de dégâts par le client tireur."));
             
-			// 4. On exécute la fonction du composant
-			// Note : Comme vu précédemment, le composant trigger l'event, 
-			// qui appelle ApplyDomageOnPlayer dans le Character, qui fait le RPC Serveur.
+			// On exécute la fonction du composant
 			DamageComp->ApplyDomage(Degats, FiringPawn);
 
-			// 5. On détruit le projectile après l'impact
+			//On détruit le projectile après l'impact
 			Destroy();
 		} else
 		{
