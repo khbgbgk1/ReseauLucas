@@ -4,21 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "DamageableComponent.generated.h"
+#include "NetworkPlayerControllerComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnDamageable, int, Damages, AActor*, Instigator, float, HitTime , FVector, HitLocation);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class TP1RESEAU_API UDamageableComponent : public UActorComponent
+class NETWORKUTILITY_API UNetworkPlayerControllerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this component's properties
-	UDamageableComponent();
+	UNetworkPlayerControllerComponent();
 	
-	UPROPERTY(BlueprintAssignable, Category="Interaction")
-	FOnDamageable OnDamageEvent;
+	UFUNCTION(Client, Reliable)
+	void Client_ReceiveRewindHit(AActor* VictimActor, FTransform VictimTransform);
 
 protected:
 	// Called when the game starts
@@ -28,7 +27,4 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,
 	                           FActorComponentTickFunction* ThisTickFunction) override;
-	
-	UFUNCTION(BlueprintCallable)
-	void ApplyDomage(int Damages, AActor* Instigator, float HitTime , FVector HitLocation);
 };

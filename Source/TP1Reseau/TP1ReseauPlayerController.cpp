@@ -5,7 +5,6 @@
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
 #include "InputMappingContext.h"
-#include "NetworkGameInstanceSubsystem.h"
 #include "TP1PlayerState.h"
 #include "Blueprint/UserWidget.h"
 #include "TP1Reseau.h"
@@ -15,6 +14,10 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogTP1ReseauPlayerController, Log, All);
 
+ATP1ReseauPlayerController::ATP1ReseauPlayerController()
+{
+	NetworkComponent = CreateDefaultSubobject<UNetworkPlayerControllerComponent>(TEXT("NetworkComponent"));
+}
 
 void ATP1ReseauPlayerController::BeginPlay()
 {
@@ -103,17 +106,11 @@ void ATP1ReseauPlayerController::Server_RequestServerTime_Implementation(float C
 
 void ATP1ReseauPlayerController::Client_ReportServerTime_Implementation(float ClientTimestamp, float ServerTimestamp)
 {
-	if (UWorld* World = GetWorld())
-	{
-		if (UGameInstance* GI = World->GetGameInstance())
-		{
-			UNetworkGameInstanceSubsystem* NetworkSubsystem = GI->GetSubsystem<UNetworkGameInstanceSubsystem>();
+	UNetworkGameInstanceSubsystem* NetworkSubsystem = GetNetworkSubsystem();
             
-			if (NetworkSubsystem)
-			{
-				NetworkSubsystem->SyncServerTime(ClientTimestamp, ServerTimestamp);
-			}
-		}
+	if (NetworkSubsystem)
+	{
+		NetworkSubsystem->SyncServerTime(ClientTimestamp, ServerTimestamp);
 	}
 }
 
@@ -124,6 +121,18 @@ void ATP1ReseauPlayerController::SyncTime()
 	{
 		Server_RequestServerTime(GetWorld()->GetTimeSeconds());
 	}
+}
+
+UNetworkGameInstanceSubsystem* ATP1ReseauPlayerController::GetNetworkSubsystem()
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			return GI->GetSubsystem<UNetworkGameInstanceSubsystem>();
+		}
+	}
+	return nullptr;
 }
 
 void ATP1ReseauPlayerController::Client_ShowLoadingScreen_Implementation()
@@ -159,7 +168,7 @@ void ATP1ReseauPlayerController::Client_HideLoadingScreen_Implementation()
 	}
 }
 
-void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill)
+void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill, float HitTime , FVector HitLocation)
 {
 	if (!CharacterToKill)
 	{
@@ -167,5 +176,17 @@ void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages
 		return;
 	}
 	//VERIFIER SI la scene est bonne avant de valider le kill
-	CharacterToKill->ApplyDamageOnPlayer(Damages, DamageInstigator);
+	UNetworkGameInstanceSubsystem* NetworkSubsystem = GetNetworkSubsystem();
+            
+	if (NetworkSubsystem)
+	{
+		bool CharacterIsTouched = NetworkSubsystem->CheckActorsCollision(DamageInstigator, CharacterToKill, HitTime, HitLocation);
+		
+		if (CharacterIsTouched)
+		{
+			CharacterToKill->ApplyDamageOnPlayer(Damages, DamageInstigator, HitTime, HitLocation);
+		}
+	}
+	
+	
 }

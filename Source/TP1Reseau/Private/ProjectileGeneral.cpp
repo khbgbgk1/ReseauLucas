@@ -4,6 +4,7 @@
 #include "ProjectileGeneral.h"
 
 #include "DamageableComponent.h"
+#include "NetworkGameInstanceSubsystem.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectileGeneral, Log, All);
@@ -89,9 +90,15 @@ void AProjectileGeneral::OnProjectileOverlap(UPrimitiveComponent* OverlappedComp
 		if (DamageComp)
 		{
 			UE_LOG(LogProjectileGeneral, Log, TEXT("HIT DETECTED : Envoi de la demande de dégâts par le client tireur."));
+			
+			float SyncTime = 0.f;
+			if (UNetworkGameInstanceSubsystem* TimeSub = GetGameInstance()->GetSubsystem<UNetworkGameInstanceSubsystem>())
+			{
+				SyncTime = TimeSub->GetSyncedServerTime();
+			}
             
 			// On exécute la fonction du composant
-			DamageComp->ApplyDomage(Degats, FiringPawn);
+			DamageComp->ApplyDomage(Degats, FiringPawn, SyncTime, GetActorLocation());
 
 			//On détruit le projectile après l'impact
 			Destroy();

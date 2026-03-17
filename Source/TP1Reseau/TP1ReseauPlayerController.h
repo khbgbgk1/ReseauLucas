@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NetworkGameInstanceSubsystem.h"
+#include "NetworkPlayerControllerComponent.h"
 #include "TP1ReseauCharacter.h"
 #include "GameFramework/PlayerController.h"
 #include "TP1ReseauPlayerController.generated.h"
@@ -21,11 +23,16 @@ class ATP1ReseauPlayerController : public APlayerController
 	
 	
 public:
+	ATP1ReseauPlayerController();
+	
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> LoadingWidgetClass;
 
 	UPROPERTY()
 	UUserWidget* LoadingWidgetInstance;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	UNetworkPlayerControllerComponent* NetworkComponent;
 	
 	UFUNCTION(Client, Reliable)
 	void Client_ShowLoadingScreen();
@@ -34,7 +41,8 @@ public:
 	void Client_HideLoadingScreen();
 	
 	UFUNCTION(Server, Reliable)
-	void Server_ApplyDamage(int Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill);
+	void Server_ApplyDamage(int Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill,float HitTime , FVector HitLocation);
+	
 protected:
 
 	/** Input Mapping Contexts */
@@ -71,5 +79,8 @@ protected:
 	
 	UFUNCTION()
 	void SyncTime();
+	
+	UFUNCTION(BlueprintCallable)
+	UNetworkGameInstanceSubsystem* GetNetworkSubsystem();
 
 };

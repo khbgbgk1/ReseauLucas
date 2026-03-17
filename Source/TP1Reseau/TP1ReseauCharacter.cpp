@@ -59,6 +59,10 @@ ATP1ReseauCharacter::ATP1ReseauCharacter()
 	//Composant pour pouvoir recevoir des dégats
 	DamageableComponent = CreateDefaultSubobject<UDamageableComponent>(TEXT("DamageableComponent"));
 	
+	//Composant pour pouvoir rollback sur le serveur
+	RewindComponent = CreateDefaultSubobject<ULagRewindComponent>(TEXT("RewindComponent"));
+	
+	
 	CurrentHealth = MaxHealth;
     
 	// Si tu as utilisé COND_OwnerOnly précédemment, assure-toi que le composant réplique
@@ -372,7 +376,7 @@ void ATP1ReseauCharacter::Die()
 	}
 }
 
-void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInstigator)
+void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInstigator, float HitTime , FVector HitLocation)
 {
 	if (!HasAuthority())
 	{
@@ -381,7 +385,7 @@ void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInsti
 		if (OwnerSessionPC)
 		{
 			UE_LOG(LogTP1ReseauCharacter, Log, TEXT("ApplyDamageOnPlayer : On appelle la fonction sur le PC du Client en cours pour que le serveur puisse accepter la demande"));
-			OwnerSessionPC->Server_ApplyDamage(Damages, DamageInstigator, this);
+			OwnerSessionPC->Server_ApplyDamage(Damages, DamageInstigator, this, HitTime, HitLocation);
 		}
 	}
 	else {

@@ -2,6 +2,9 @@
 
 
 #include "NetworkGameInstanceSubsystem.h"
+
+#include "LagRewindComponent.h"
+#include "NetworkPlayerControllerComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -112,4 +115,56 @@ void UNetworkGameInstanceSubsystem::ConsoleLogCircularBufferOutliner(TArray<floa
 float UNetworkGameInstanceSubsystem::GetCurrentPing() const
 {
 	return CurrentPing;
+}
+
+bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigator,
+	AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation)
+{
+	if (!ActorToGetRewindShapeCollision) return false;
+
+	ULagRewindComponent* RewindComp = ActorToGetRewindShapeCollision->FindComponentByClass<ULagRewindComponent>();
+	if (RewindComp)
+	{
+		// On cherche le move le plus proche du HitTime envoyé par le client
+		FSavedMove BestMove = RewindComp->GetClosestMoveToTime(HitTime);
+		bool bFound = BestMove.Time != -1.0f; // Valeur par défault dans la fonction GetClosestMoveToTime si rien de trouvé
+
+		if (bFound)
+		{
+			// --- VERIFICATION ---
+			// On vérifie si le point d'impact du client est dans la capsule serveur à ce moment
+			// Calcul simple : Distance entre le centre de la capsule rembobinée et le point d'impact
+			float Distance = FVector::Dist(BestMove.Position.GetLocation(), HitLocation);
+            
+			// Seuil de tolérance (Rayon capsule ~42 + marge d'erreur/vitesse ~30)
+			const float Tolerance = 85.0f; 
+
+			if (Distance <= Tolerance)
+			{
+				//Draw la shape chez le client DU Hit
+				if (DamageInstigator)
+				{
+					APawn* InstigatorPawn = Cast<APawn>(DamageInstigator);
+					if (InstigatorPawn && InstigatorPawn->GetController())
+					{
+						UNetworkPlayerControllerComponent* DebugComp = InstigatorPawn->GetController()->FindComponentByClass<UNetworkPlayerControllerComponent>();
+						if (DebugComp)
+						{
+							UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Serveur: Envoi du debug au NetworkDebugComponent du tireur"));
+							DebugComp->Client_ReceiveRewindHit(ActorToGetRewindShapeCollision, BestMove.Position);
+						}
+					}
+				}
+				
+				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Rewind Success: Dist %f <= %f"), Distance, Tolerance);
+				return true;
+			}
+			else
+			{
+				UE_LOG(LogNetworkGameInstanceSubsystem, Warning, TEXT("Rewind REJECTED: Dist %f trop grande !"), Distance);
+				return false;
+			}
+		}
+	}
+	return false;
 }

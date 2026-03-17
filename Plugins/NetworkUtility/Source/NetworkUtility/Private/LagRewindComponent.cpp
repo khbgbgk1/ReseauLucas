@@ -3,6 +3,7 @@
 
 #include "LagRewindComponent.h"
 
+#include "NetworkGameInstanceSubsystem.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SphereComponent.h"
@@ -45,6 +46,36 @@ void ULagRewindComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void ULagRewindComponent::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void ULagRewindComponent::DrawDebugMove(const FSavedMove& Move, FColor Color, float Duration)
+{
+	if (!ReferenceShapeForDrawDebug)
+	{
+		UE_LOG(LogLagRewindComponent, Warning, TEXT("DrawDebugMove: ReferenceShapeForDrawDebug est NULL sur %s"), *GetOwner()->GetName());
+		return;
+	}
+
+	FTransform FinalVisualTransform = DebugRelativeTransform * Move.Position;
+	FVector Location = FinalVisualTransform.GetLocation();
+	FQuat Rotation = FinalVisualTransform.GetRotation();
+	FVector Scale = FinalVisualTransform.GetScale3D();
+
+	if (UBoxComponent* Box = Cast<UBoxComponent>(ReferenceShapeForDrawDebug))
+	{
+		DrawDebugBox(GetWorld(), Location, Box->GetUnscaledBoxExtent() * Scale, Rotation, Color, false, Duration);
+	}
+	else if (UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(ReferenceShapeForDrawDebug))
+	{
+		float ScaledHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight() * Scale.Z;
+		float ScaledRadius = Capsule->GetUnscaledCapsuleRadius() * FMath::Max(Scale.X, Scale.Y);
+		DrawDebugCapsule(GetWorld(), Location, ScaledHalfHeight, ScaledRadius, Rotation, Color, false, Duration);
+	}
+	else if (USphereComponent* Sphere = Cast<USphereComponent>(ReferenceShapeForDrawDebug))
+	{
+		float ScaledRadius = Sphere->GetUnscaledSphereRadius() * Scale.GetMax();
+		DrawDebugSphere(GetWorld(), Location, ScaledRadius, 16, Color, false, Duration);
+	}
 }
 
 void ULagRewindComponent::OnRegister()
@@ -93,7 +124,16 @@ void ULagRewindComponent::RecordMoves()
 		return;
 	}
 	FSavedMove NewMove;
-	NewMove.Time =GetWorld()->GetTimeSeconds();
+	
+	//on reccupere le temps synchronisé au serveur
+	if (UNetworkGameInstanceSubsystem* NetworkSubsystem = GetWorld()->GetGameInstance()->GetSubsystem<UNetworkGameInstanceSubsystem>())
+	{
+		NewMove.Time = NetworkSubsystem->GetSyncedServerTime();
+	}
+	else
+	{
+		NewMove.Time = GetWorld()->GetTimeSeconds();
+	}
 	NewMove.Position = actor->GetActorTransform();
 	SavedMoves.AddHead(NewMove);
 	
@@ -120,41 +160,41 @@ void ULagRewindComponent::ShowHistory()
 
 	for (auto& Move : SavedMoves)
 	{
-		FTransform FinalVisualTransform = DebugRelativeTransform * Move.Position;
-        
-		FVector Location = FinalVisualTransform.GetLocation();
-		FQuat Rotation = FinalVisualTransform.GetRotation();
-		FVector Scale = FinalVisualTransform.GetScale3D();
-		
-		FColor DebugColor = FColor::Green;
-		
-		if (UBoxComponent* Box = Cast<UBoxComponent>(ReferenceShapeForDrawDebug))
+		DrawDebugMove(Move, HistoryShapeColor, ShapeRewindLifeDuration);
+	}
+}
+
+FSavedMove ULagRewindComponent::GetClosestMoveToTime(float Time)
+{
+	FSavedMove BestMove;
+	BestMove.Time = -1.0f;
+	for(auto It = SavedMoves.GetHead(); It != nullptr; It = It->GetNextNode())
+	{
+		if (It->GetValue().Time <= Time)
 		{
-			// Note : On multiplie l'extent par le scale du transform de debug
-			DrawDebugBox(GetWorld(), Location, Box->GetUnscaledBoxExtent() * Scale, Rotation, DebugColor, false, 0.1f);
-		}
-		else if (UCapsuleComponent* Capsule = Cast<UCapsuleComponent>(ReferenceShapeForDrawDebug))
-		{
-			// On ajuste rayon et hauteur selon le scale (Z pour hauteur, X ou Y pour rayon)
-			float ScaledHalfHeight = Capsule->GetUnscaledCapsuleHalfHeight() * Scale.Z;
-			float ScaledRadius = Capsule->GetUnscaledCapsuleRadius() * FMath::Max(Scale.X, Scale.Y);
-            
-			DrawDebugCapsule(GetWorld(), Location, ScaledHalfHeight, ScaledRadius, Rotation, DebugColor, false, 0.1f);
-		}
-		else if (USphereComponent* Sphere = Cast<USphereComponent>(ReferenceShapeForDrawDebug))
-		{
-			float ScaledRadius = Sphere->GetUnscaledSphereRadius() * Scale.GetMax();
-			DrawDebugSphere(GetWorld(), Location, ScaledRadius, 16, DebugColor, false, 0.1f);
-		}
-		else 
-		{
-			UE_LOG(LogLagRewindComponent, Warning, 
-				TEXT("LogLagRewindComponent : ShowHistory: Type de forme non supporté pour le dessin. Classe : [%s]. Veuillez ajouter un bloc 'else if' pour gérer ce type dans LagRewindComponent.cpp"), 
-				*ReferenceShapeForDrawDebug->GetClass()->GetName());
-            
+			BestMove = It->GetValue();
 			break; 
 		}
 	}
+	return BestMove;
+}
+
+void ULagRewindComponent::DrawValidationHit(FTransform ActorTransformAtTime)
+{
+	if (!ShowRewindHit)
+	{
+		UE_LOG(LogLagRewindComponent, Log, TEXT("Client_DrawValidationHit: ShowRewindHit désactivé pas de shape tracé"));
+		return;
+	}
+	UE_LOG(LogLagRewindComponent, Log, TEXT("Client_DrawValidationHit: Dessin forcé par le serveur sur %s"), *GetOwner()->GetName());
+
+	// On crée un SavedMove temporaire pour réutiliser ta fonction de dessin
+	FSavedMove TempMove;
+	TempMove.Position = ActorTransformAtTime;
+	TempMove.Time = 0.0f; // Peu importe ici
+
+	// On dessine la shape (Jaune par exemple)
+	DrawDebugMove(TempMove, HitShapeColor, ShapeRewindLifeDurationForHit);
 }
 
 #if WITH_EDITOR

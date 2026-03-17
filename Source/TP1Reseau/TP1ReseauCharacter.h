@@ -7,6 +7,7 @@
 #include "Logging/LogMacros.h"
 #include "SkinComponent.h"
 #include "WeaponGeneral.h"
+#include "LagRewindComponent.h"
 #include "DamageableComponent.h"
 #include "TP1ReseauCharacter.generated.h"
 
@@ -68,6 +69,9 @@ public:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
 	UDamageableComponent* DamageableComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	ULagRewindComponent* RewindComponent;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, ReplicatedUsing=OnRep_Health, Category = "Gameplay")
 	int CurrentHealth = 5;
@@ -77,7 +81,7 @@ public:
 	int MaxHealth = 5;
 
 	UFUNCTION(BlueprintCallable, Category = "Gameplay")
-	void ApplyDamageOnPlayer(int Damages, AActor* DamageInstigator);
+	void ApplyDamageOnPlayer(int Damages, AActor* DamageInstigator,float HitTime , FVector HitLocation);
 
 protected:
 

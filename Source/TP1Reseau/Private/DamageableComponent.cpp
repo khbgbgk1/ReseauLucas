@@ -36,9 +36,9 @@ void UDamageableComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 	// ...
 }
 
-void UDamageableComponent::ApplyDomage(int Damages, AActor* Instigator)
+void UDamageableComponent::ApplyDomage(int Damages, AActor* Instigator, float HitTime , FVector HitLocation)
 {
-	OnDamageEvent.Broadcast(Damages,Instigator);
+	OnDamageEvent.Broadcast(Damages,Instigator,HitTime,HitLocation);
         
 	UE_LOG(LogDamageableComponent, Log, TEXT("ApplyDomage: Broadcast réussi. Dégâts: %d par %s"), Damages, *Instigator->GetName());
 }

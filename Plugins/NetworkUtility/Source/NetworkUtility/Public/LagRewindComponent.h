@@ -40,6 +40,22 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
 	bool ShowRewindHistory = false;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	float ShapeRewindLifeDuration = 0.1f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	FColor HistoryShapeColor = FColor::Green;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	bool ShowRewindHit = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	float ShapeRewindLifeDurationForHit = 3.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	FColor HitShapeColor = FColor::Yellow;
+	
+	
 	UFUNCTION(Blueprintable)
 	virtual void OnRegister() override;
 	
@@ -57,6 +73,8 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	
+	void DrawDebugMove(const FSavedMove& Move, FColor Color, float Duration);
 
 public:
 	// Called every frame
@@ -75,5 +93,11 @@ public:
 	
 	UFUNCTION(BlueprintCallable)
 	void ShowHistory();
+	
+	UFUNCTION(BlueprintCallable)
+	FSavedMove GetClosestMoveToTime(float Time);
+	
+	UFUNCTION(BlueprintCallable)
+	void DrawValidationHit(FTransform ActorTransformAtTime);
 	
 };
