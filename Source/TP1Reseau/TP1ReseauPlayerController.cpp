@@ -41,9 +41,6 @@ void ATP1ReseauPlayerController::BeginPlay()
 		}
 
 	}
-	
-	//Plus opti si on change reset apres le timer une fois le jeu chargé
-	GetWorldTimerManager().SetTimer(TimerHandle_Sync, this, &ATP1ReseauPlayerController::SyncTime, 0.1f, true);
 }
 
 void ATP1ReseauPlayerController::SetupInputComponent()
@@ -98,43 +95,6 @@ void ATP1ReseauPlayerController::OnPossess(APawn* InPawn)
 
 }
 
-void ATP1ReseauPlayerController::Server_RequestServerTime_Implementation(float ClientTimestamp)
-{
-	// On renvoie l'heure du monde
-	Client_ReportServerTime(ClientTimestamp, GetWorld()->GetTimeSeconds());
-}
-
-void ATP1ReseauPlayerController::Client_ReportServerTime_Implementation(float ClientTimestamp, float ServerTimestamp)
-{
-	UNetworkGameInstanceSubsystem* NetworkSubsystem = GetNetworkSubsystem();
-            
-	if (NetworkSubsystem)
-	{
-		NetworkSubsystem->SyncServerTime(ClientTimestamp, ServerTimestamp);
-	}
-}
-
-void ATP1ReseauPlayerController::SyncTime()
-{
-	// On n'exécute ça que sur le client local
-	if (IsLocalController())
-	{
-		Server_RequestServerTime(GetWorld()->GetTimeSeconds());
-	}
-}
-
-UNetworkGameInstanceSubsystem* ATP1ReseauPlayerController::GetNetworkSubsystem()
-{
-	if (UWorld* World = GetWorld())
-	{
-		if (UGameInstance* GI = World->GetGameInstance())
-		{
-			return GI->GetSubsystem<UNetworkGameInstanceSubsystem>();
-		}
-	}
-	return nullptr;
-}
-
 void ATP1ReseauPlayerController::Client_ShowLoadingScreen_Implementation()
 {
 	if (!LoadingWidgetInstance && LoadingWidgetClass)
@@ -176,7 +136,7 @@ void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages
 		return;
 	}
 	//VERIFIER SI la scene est bonne avant de valider le kill
-	UNetworkGameInstanceSubsystem* NetworkSubsystem = GetNetworkSubsystem();
+	UNetworkGameInstanceSubsystem* NetworkSubsystem = NetworkComponent->GetNetworkSubsystem();
             
 	if (NetworkSubsystem)
 	{

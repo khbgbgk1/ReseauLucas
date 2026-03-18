@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NetworkGameInstanceSubsystem.h"
 #include "Components/ActorComponent.h"
 #include "NetworkPlayerControllerComponent.generated.h"
 
@@ -18,10 +19,27 @@ public:
 	
 	UFUNCTION(Client, Reliable)
 	void Client_ReceiveRewindHit(AActor* VictimActor, FTransform VictimTransform);
+	
+	UFUNCTION(BlueprintCallable)
+	UNetworkGameInstanceSubsystem* GetNetworkSubsystem();
 
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	
+	UPROPERTY(visibleAnywhere,BlueprintReadOnly)
+	TObjectPtr<APlayerController> OwningPlayerController;
+	
+	UFUNCTION(Server, Unreliable)
+	void Server_RequestServerTime(float ClientTimestamp);
+	
+	UFUNCTION(Client, Unreliable)
+	void Client_ReportServerTime(float ClientTimestamp, float ServerTimestamp);
+	
+	FTimerHandle TimerHandle_Sync;
+	
+	UFUNCTION()
+	void SyncTime();
 
 public:
 	// Called every frame

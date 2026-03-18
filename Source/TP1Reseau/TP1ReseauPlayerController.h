@@ -68,19 +68,5 @@ protected:
 	
 	UFUNCTION()
 	virtual void OnPossess(APawn* InPawn) override;
-	
-	UFUNCTION(Server, Unreliable)
-	void Server_RequestServerTime(float ClientTimestamp);
-
-	UFUNCTION(Client, Unreliable)
-	void Client_ReportServerTime(float ClientTimestamp, float ServerTimestamp);
-	
-	FTimerHandle TimerHandle_Sync;
-	
-	UFUNCTION()
-	void SyncTime();
-	
-	UFUNCTION(BlueprintCallable)
-	UNetworkGameInstanceSubsystem* GetNetworkSubsystem();
 
 };

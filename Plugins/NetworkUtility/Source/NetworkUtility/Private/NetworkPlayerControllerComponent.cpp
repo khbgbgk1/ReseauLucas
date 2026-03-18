@@ -2,7 +2,7 @@
 
 
 #include "NetworkPlayerControllerComponent.h"
-
+#include "TimerManager.h"
 #include "LagRewindComponent.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogNetworkPlayerControllerComponent, Log, All);
@@ -45,9 +45,56 @@ void UNetworkPlayerControllerComponent::Client_ReceiveRewindHit_Implementation(A
 void UNetworkPlayerControllerComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
-	// ...
+	OwningPlayerController = Cast<APlayerController>(GetOwner());
+    
+	if (!OwningPlayerController)
+	{
+		UE_LOG(LogNetworkPlayerControllerComponent, Error, TEXT("BeginPlay: Owner n'est pas un APlayerController !"));
+	}
 	
+	//Plus opti si on change reset apres le timer une fois le jeu chargé
+	if (OwningPlayerController->IsLocalController())
+	{
+		OwningPlayerController->GetWorldTimerManager().SetTimer(TimerHandle_Sync, this, &UNetworkPlayerControllerComponent::SyncTime, 0.1f, true);
+	}
+	
+}
+
+void UNetworkPlayerControllerComponent::Server_RequestServerTime_Implementation(float ClientTimestamp)
+{
+	// On renvoie l'heure du monde
+	Client_ReportServerTime(ClientTimestamp, GetWorld()->GetTimeSeconds());
+}
+
+void UNetworkPlayerControllerComponent::Client_ReportServerTime_Implementation(float ClientTimestamp, float ServerTimestamp)
+{
+	UNetworkGameInstanceSubsystem* NetworkSubsystem = GetNetworkSubsystem();
+            
+	if (NetworkSubsystem)
+	{
+		NetworkSubsystem->SyncServerTime(ClientTimestamp, ServerTimestamp);
+	}
+}
+
+void UNetworkPlayerControllerComponent::SyncTime()
+{
+	// On n'exécute ça que sur le client local
+	if (OwningPlayerController && OwningPlayerController->IsLocalController())
+	{
+		Server_RequestServerTime(GetWorld()->GetTimeSeconds());
+	}
+}
+
+UNetworkGameInstanceSubsystem* UNetworkPlayerControllerComponent::GetNetworkSubsystem()
+{
+	if (UWorld* World = GetWorld())
+	{
+		if (UGameInstance* GI = World->GetGameInstance())
+		{
+			return GI->GetSubsystem<UNetworkGameInstanceSubsystem>();
+		}
+	}
+	return nullptr;
 }
 
 
