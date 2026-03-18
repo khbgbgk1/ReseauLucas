@@ -128,7 +128,7 @@ void ATP1ReseauPlayerController::Client_HideLoadingScreen_Implementation()
 	}
 }
 
-void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill, float HitTime , FVector HitLocation)
+void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill, float HitTime , FVector HitLocation, FVector StartLocation)
 {
 	if (!CharacterToKill)
 	{
@@ -140,11 +140,11 @@ void ATP1ReseauPlayerController::Server_ApplyDamage_Implementation(int32 Damages
             
 	if (NetworkSubsystem)
 	{
-		bool CharacterIsTouched = NetworkSubsystem->CheckActorsCollision(DamageInstigator, CharacterToKill, HitTime, HitLocation);
+		bool CharacterIsTouched = NetworkSubsystem->CheckActorsCollision(DamageInstigator, CharacterToKill, HitTime, HitLocation, StartLocation);
 		
 		if (CharacterIsTouched)
 		{
-			CharacterToKill->ApplyDamageOnPlayer(Damages, DamageInstigator, HitTime, HitLocation);
+			CharacterToKill->ApplyDamageOnPlayer(Damages, DamageInstigator, HitTime, HitLocation,StartLocation);
 		}
 	}
 	

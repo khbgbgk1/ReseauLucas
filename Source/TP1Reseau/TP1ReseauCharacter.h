@@ -81,7 +81,7 @@ public:
 	int MaxHealth = 5;
 
 	UFUNCTION(BlueprintCallable, Category = "Gameplay")
-	void ApplyDamageOnPlayer(int Damages, AActor* DamageInstigator,float HitTime , FVector HitLocation);
+	void ApplyDamageOnPlayer(int Damages, AActor* DamageInstigator,float HitTime , FVector HitLocation, FVector StartLocation);
 
 protected:
 

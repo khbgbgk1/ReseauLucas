@@ -32,6 +32,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite,	 Category = "Gameplay")
 	int Degats = 5;
 	
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Gameplay")
+	FVector StartPosition;
+	
 	UFUNCTION()
 	void OnRep_FiringPawn();
 	

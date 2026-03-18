@@ -378,7 +378,7 @@ void ATP1ReseauCharacter::Die()
 	}
 }
 
-void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInstigator, float HitTime , FVector HitLocation)
+void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInstigator, float HitTime , FVector HitLocation, FVector StartLocation)
 {
 	if (!HasAuthority())
 	{
@@ -387,7 +387,7 @@ void ATP1ReseauCharacter::ApplyDamageOnPlayer(int32 Damages, AActor* DamageInsti
 		if (OwnerSessionPC)
 		{
 			UE_LOG(LogTP1ReseauCharacter, Log, TEXT("ApplyDamageOnPlayer : On appelle la fonction sur le PC du Client en cours pour que le serveur puisse accepter la demande"));
-			OwnerSessionPC->Server_ApplyDamage(Damages, DamageInstigator, this, HitTime, HitLocation);
+			OwnerSessionPC->Server_ApplyDamage(Damages, DamageInstigator, this, HitTime, HitLocation,StartLocation);
 		}
 	}
 	else {

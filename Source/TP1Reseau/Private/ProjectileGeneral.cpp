@@ -47,6 +47,11 @@ void AProjectileGeneral::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (HasAuthority())
+	{
+		StartPosition = GetActorLocation();
+	}
+	
 }
 
 // Called every frame
@@ -100,7 +105,7 @@ void AProjectileGeneral::OnProjectileOverlap(UPrimitiveComponent* OverlappedComp
 			}
             
 			// On exécute la fonction du composant
-			DamageComp->ApplyDomage(Degats, FiringPawn, SyncTime, GetActorLocation());
+			DamageComp->ApplyDomage(Degats, FiringPawn, SyncTime, GetActorLocation(),StartPosition);
 
 			//On détruit le projectile après l'impact
 			Destroy();
@@ -116,4 +121,5 @@ void AProjectileGeneral::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& O
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AProjectileGeneral, FiringPawn);
+	DOREPLIFETIME(AProjectileGeneral, StartPosition);
 }

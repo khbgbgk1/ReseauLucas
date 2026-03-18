@@ -5,6 +5,8 @@
 
 #include "LagRewindComponent.h"
 #include "NetworkPlayerControllerComponent.h"
+#include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
@@ -123,7 +125,7 @@ float UNetworkGameInstanceSubsystem::GetServerTripTime() const
 }
 
 bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigator,
-                                                         AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation)
+                                                         AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation, FVector StartLocation)
 {
 	if (!ActorToGetRewindShapeCollision) return false;
 
@@ -136,38 +138,63 @@ bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigato
 
 		if (bFound)
 		{
-			// --- VERIFICATION ---
-			// On vérifie si le point d'impact du client est dans la capsule serveur à ce moment
-			// Calcul simple : Distance entre le centre de la capsule rembobinée et le point d'impact
-			float Distance = FVector::Dist(BestMove.Position.GetLocation(), HitLocation);
-            
-			// Seuil de tolérance (Rayon capsule ~42 + marge d'erreur/vitesse ~30)
-			const float Tolerance = 85.0f; 
+			UShapeComponent* RewindShape = RewindComp->ReferenceShapeForDrawDebug; 
+			if (!RewindShape) return false;
+			
+			FTransform OriginalTransform = RewindShape->GetComponentTransform();
+    
+			RewindShape->SetWorldTransform(BestMove.Position);
+			RewindShape->UpdateComponentToWorld(); // Force la mise à jour physique
 
-			if (Distance <= Tolerance)
+			// RAYCAST pour verifier l'impact
+			FHitResult HitResult;
+			FCollisionQueryParams Params;
+			Params.AddIgnoredActor(DamageInstigator); // On n'ignore pas la victime car on veut la toucher !
+			
+			FVector ShootDir = (HitLocation - StartLocation).GetSafeNormal();
+
+			// On Allonge le tir
+			FVector ExtendedEnd = HitLocation + (ShootDir * 100.0f);
+
+			// On trace uniquement contre ce composant spécifique
+			bool bHit = RewindShape->LineTraceComponent(
+				HitResult, 
+				StartLocation, 
+				ExtendedEnd,
+				Params
+			);
+
+			RewindShape->SetWorldTransform(OriginalTransform);
+			RewindShape->UpdateComponentToWorld();
+
+			// 5. Validation finale
+			if (bHit)
 			{
-				//Draw la shape chez le client DU Hit
 				if (DamageInstigator)
 				{
 					APawn* InstigatorPawn = Cast<APawn>(DamageInstigator);
 					if (InstigatorPawn && InstigatorPawn->GetController())
 					{
-						UNetworkPlayerControllerComponent* DebugComp = InstigatorPawn->GetController()->FindComponentByClass<UNetworkPlayerControllerComponent>();
-						if (DebugComp)
+						UNetworkPlayerControllerComponent* NetComp = InstigatorPawn->GetController()->FindComponentByClass<UNetworkPlayerControllerComponent>();
+						if (NetComp)
 						{
 							UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Serveur: Envoi du debug au NetworkDebugComponent du tireur"));
-							DebugComp->Client_ReceiveRewindHit(ActorToGetRewindShapeCollision, BestMove.Position);
+							NetComp->Client_ReceiveRewindHit(ActorToGetRewindShapeCollision, BestMove.Position);
 						}
 					}
 				}
-				
-				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Rewind Success: Dist %f <= %f"), Distance, Tolerance);
+				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Rewind VALIDÉ par Raycast local sur %s"), *ActorToGetRewindShapeCollision->GetName());
 				return true;
 			}
 			else
 			{
-				UE_LOG(LogNetworkGameInstanceSubsystem, Warning, TEXT("Rewind REJECTED: Dist %f trop grande !"), Distance);
-				return false;
+				UE_LOG(LogNetworkGameInstanceSubsystem, Warning, 
+					TEXT("Rewind ÉCHOUÉ sur %s : Rayon [Start: %s -> Extend End: %s] | Shape au passé: %s"), 
+					*ActorToGetRewindShapeCollision->GetName(),
+					*StartLocation.ToString(), 
+					*ExtendedEnd.ToString(), 
+					*BestMove.Position.GetLocation().ToString()
+				);				return false;
 			}
 		}
 	}

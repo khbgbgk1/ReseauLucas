@@ -6,7 +6,7 @@
 #include "Components/ActorComponent.h"
 #include "DamageableComponent.generated.h"
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnDamageable, int, Damages, AActor*, Instigator, float, HitTime , FVector, HitLocation);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FiveParams(FOnDamageable, int, Damages, AActor*, Instigator, float, HitTime , FVector, HitLocation, FVector, StartLocation);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class TP1RESEAU_API UDamageableComponent : public UActorComponent
@@ -30,5 +30,5 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 	
 	UFUNCTION(BlueprintCallable)
-	void ApplyDomage(int Damages, AActor* Instigator, float HitTime , FVector HitLocation);
+	void ApplyDomage(int Damages, AActor* Instigator, float HitTime , FVector HitLocation, FVector StartLocation);
 };

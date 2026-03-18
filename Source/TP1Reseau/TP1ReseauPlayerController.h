@@ -41,7 +41,7 @@ public:
 	void Client_HideLoadingScreen();
 	
 	UFUNCTION(Server, Reliable)
-	void Server_ApplyDamage(int Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill,float HitTime , FVector HitLocation);
+	void Server_ApplyDamage(int Damages, AActor* DamageInstigator,ATP1ReseauCharacter* CharacterToKill,float HitTime , FVector HitLocation, FVector StartLocation);
 	
 protected:
 

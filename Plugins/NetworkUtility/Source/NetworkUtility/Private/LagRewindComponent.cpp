@@ -92,6 +92,11 @@ void ULagRewindComponent::OnRegister()
 			ReferenceShapeForDrawDebug->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			ReferenceShapeForDrawDebug->SetRelativeTransform(DebugRelativeTransform);
 			ReferenceShapeForDrawDebug->RegisterComponent();
+			
+			ReferenceShapeForDrawDebug->SetCollisionEnabled(ECollisionEnabled::QueryOnly); 
+			ReferenceShapeForDrawDebug->SetCollisionObjectType(ECC_WorldDynamic);
+			ReferenceShapeForDrawDebug->SetCollisionResponseToAllChannels(ECR_Ignore);
+			ReferenceShapeForDrawDebug->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block); // Le canal par défaut du trace
 		}
 	}
 }

@@ -55,7 +55,7 @@ class NETWORKUTILITY_API UNetworkGameInstanceSubsystem : public UGameInstanceSub
 	
 	//Rewind gestion
 	UFUNCTION(BlueprintCallable)
-	bool CheckActorsCollision(AActor* DamageInstigator, AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation);
+	bool CheckActorsCollision(AActor* DamageInstigator, AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation, FVector StartLocation);
 	
 private :
 	UPROPERTY()
