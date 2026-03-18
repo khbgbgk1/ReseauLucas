@@ -272,6 +272,8 @@ void ATP1ReseauCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	CurrentHealth = MaxHealth;
+	
 	if (SkinComponent == nullptr)
 	{
 		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("BeginPlay: SkinComponent est NULL dès le BeginPlay !"));
