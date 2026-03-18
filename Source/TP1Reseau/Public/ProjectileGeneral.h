@@ -6,6 +6,7 @@
 #include "Components/SphereComponent.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
+#include "Sound/SoundBase.h"
 #include "ProjectileGeneral.generated.h"
 
 UCLASS()
@@ -34,6 +35,9 @@ public:
 	
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "Gameplay")
 	FVector StartPosition;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Effects")
+	USoundBase* LaunchSound;
 	
 	UFUNCTION()
 	void OnRep_FiringPawn();

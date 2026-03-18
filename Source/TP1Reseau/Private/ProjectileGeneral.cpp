@@ -5,6 +5,7 @@
 
 #include "DamageableComponent.h"
 #include "NetworkGameInstanceSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogProjectileGeneral, Log, All);
@@ -52,6 +53,12 @@ void AProjectileGeneral::BeginPlay()
 		StartPosition = GetActorLocation();
 	}
 	
+	//Play sound effect
+	if (LaunchSound && GetNetMode() != NM_DedicatedServer)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, LaunchSound, GetActorLocation());
+	}
+	
 }
 
 // Called every frame
@@ -71,6 +78,10 @@ void AProjectileGeneral::CheckAndHideIfOwner()
 		UE_LOG(LogProjectileGeneral, Display, TEXT("C'est mon tir ! Cache-toi."));
 		SetActorHiddenInGame(true);
 		SetActorEnableCollision(false);
+	}
+	else
+	{
+		
 	}
 }
 
