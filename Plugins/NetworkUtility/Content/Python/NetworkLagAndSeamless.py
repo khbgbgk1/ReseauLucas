@@ -1,58 +1,63 @@
 import unreal
-import importlib
 
-# Valeur modifiable manuellement dans ce fichier
-# Sauvegardez le fichier et cliquez sur le bouton pour actualiser dans UE
-LAG_VALUE = 500 
+# Variable de session
+CURRENT_LAG = 500
 
-def get_context():
-    """Récupère un contexte valide pour exécuter des commandes console."""
-    # En priorité le monde du PIE (Play In Editor)
-    if unreal.EditorLevelLibrary.get_game_world():
-        return unreal.EditorLevelLibrary.get_game_world()
-    # Sinon le monde de l'éditeur
-    return unreal.EditorLevelLibrary.get_editor_world()
-
-def set_network_lag():
-    """Charge la valeur et l'applique avec un contexte valide."""
-    import NetworkLagAndSeamless
-    importlib.reload(NetworkLagAndSeamless)
+def apply_lag(value):
+    """Applique la valeur de lag choisie."""
+    global CURRENT_LAG
+    CURRENT_LAG = value
     
-    val = NetworkLagAndSeamless.LAG_VALUE
-    context = get_context()
+    world = unreal.EditorLevelLibrary.get_editor_world()
+    if world:
+        unreal.SystemLibrary.execute_console_command(world, f"NetEmulation.PktLag {value}")
+        unreal.log(f"Réseau : Lag réglé sur {value}ms")
     
-    # On passe 'context' au lieu de 'None'
-    unreal.SystemLibrary.execute_console_command(context, f"NetEmulation.PktLag {val}")
-    unreal.log(f"Réseau : NetEmulation.PktLag réglé sur {val}ms")
-    
-    # Actualise le bouton
+    # Rafraîchir pour mettre à jour le label du bouton principal
     main()
 
 def main():
-    # LOGIQUE 1 : Seamless Travel
-    # On utilise le contexte ici aussi pour éviter l'erreur au boot
-    context = get_context()
-    unreal.SystemLibrary.execute_console_command(context, "net.AllowPIESeamlessTravel True")
+    global CURRENT_LAG
     
-    # LOGIQUE 2 : Bouton
-    import NetworkLagAndSeamless
-    current_lag = NetworkLagAndSeamless.LAG_VALUE
+    # 1. Seamless Travel au démarrage
+    world = unreal.EditorLevelLibrary.get_editor_world()
+    if world:
+        unreal.SystemLibrary.execute_console_command(world, "net.AllowPIESeamlessTravel True")
 
+    # 2. Création du Menu
     menus = unreal.ToolMenus.get()
     toolbar = menus.extend_menu("LevelEditor.LevelEditorToolBar.User")
     if not toolbar: return
 
-    entry = unreal.ToolMenuEntry(name="NetworkLagButton", type=unreal.MultiBlockType.MENU_ENTRY)
-    entry.set_label(f"Set Lag: {current_lag}ms")
-    entry.set_tool_tip(f"Applique {current_lag}ms. Modifiez LAG_VALUE dans le script et sauvegardez.")
-    
-    entry.set_string_command(
-        unreal.ToolMenuStringCommandType.PYTHON,
-        "",
-        "import NetworkLagAndSeamless; NetworkLagAndSeamless.set_network_lag()"
+    # Création d'un bouton de type COMBO (déroulant)
+    entry = unreal.ToolMenuEntry(
+        name="NetworkLagCombo",
+        type=unreal.MultiBlockType.TOOL_BAR_COMBO_BUTTON # Transforme le bouton en menu
     )
-    
+    entry.set_label(f"Lag: {CURRENT_LAG}ms")
     toolbar.add_menu_entry("Scripts", entry)
+
+    # Création du sous-menu qui s'ouvre quand on clique
+    sub_menu_name = "LevelEditor.LevelEditorToolBar.User.NetworkLagCombo"
+    sub_menu = menus.register_menu(sub_menu_name, type=unreal.MultiBoxType.MENU)
+    
+    # On ajoute des options de valeurs prédéfinies
+    options = [0, 100, 250, 500, 1000]
+    
+    for val in options:
+        sec_entry = unreal.ToolMenuEntry(
+            name=f"LagOption_{val}",
+            type=unreal.MultiBlockType.MENU_ENTRY
+        )
+        sec_entry.set_label(f"Set PktLag to {val}ms")
+        # Commande pour appeler la fonction avec la valeur choisie
+        sec_entry.set_string_command(
+            unreal.ToolMenuStringCommandType.PYTHON,
+            "",
+            f"import NetworkLagAndSeamless; NetworkLagAndSeamless.apply_lag({val})"
+        )
+        sub_menu.add_menu_entry("Options", sec_entry)
+
     menus.refresh_all_widgets()
 
 if __name__ == "__main__":
