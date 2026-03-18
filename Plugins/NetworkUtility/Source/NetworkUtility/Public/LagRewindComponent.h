@@ -75,6 +75,8 @@ protected:
 	virtual void BeginPlay() override;
 	
 	void DrawDebugMove(const FSavedMove& Move, FColor Color, float Duration);
+	
+	TDoubleLinkedList<FSavedMove>::TDoubleLinkedListNode* GetNodeBeforeTime(float Time);
 
 public:
 	// Called every frame
@@ -94,8 +96,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ShowHistory();
 	
+	// UFUNCTION(BlueprintCallable)
+	// FSavedMove GetClosestMoveToTime(float Time);
+	
 	UFUNCTION(BlueprintCallable)
-	FSavedMove GetClosestMoveToTime(float Time);
+	FSavedMove GetInterpolatedMoveToTime(float Time);
 	
 	UFUNCTION(BlueprintCallable)
 	void DrawValidationHit(FTransform ActorTransformAtTime);

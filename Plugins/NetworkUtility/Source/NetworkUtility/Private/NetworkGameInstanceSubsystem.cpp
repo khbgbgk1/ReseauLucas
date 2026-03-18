@@ -126,7 +126,7 @@ bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigato
 	if (RewindComp)
 	{
 		// On cherche le move le plus proche du HitTime envoyé par le client
-		FSavedMove BestMove = RewindComp->GetClosestMoveToTime(HitTime);
+		FSavedMove BestMove = RewindComp->GetInterpolatedMoveToTime(HitTime);
 		bool bFound = BestMove.Time != -1.0f; // Valeur par défault dans la fonction GetClosestMoveToTime si rien de trouvé
 
 		if (bFound)

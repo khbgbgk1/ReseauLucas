@@ -164,19 +164,72 @@ void ULagRewindComponent::ShowHistory()
 	}
 }
 
-FSavedMove ULagRewindComponent::GetClosestMoveToTime(float Time)
+// FSavedMove ULagRewindComponent::GetClosestMoveToTime(float Time)
+// {
+// 	FSavedMove BestMove;
+// 	BestMove.Time = -1.0f;
+// 	for(auto It = SavedMoves.GetHead(); It != nullptr; It = It->GetNextNode())
+// 	{
+// 		if (It->GetValue().Time <= Time)
+// 		{
+// 			BestMove = It->GetValue();
+// 			break; 
+// 		}
+// 	}
+// 	return BestMove;
+// }
+
+TDoubleLinkedList<FSavedMove>::TDoubleLinkedListNode* ULagRewindComponent::GetNodeBeforeTime(float Time)
 {
-	FSavedMove BestMove;
-	BestMove.Time = -1.0f;
-	for(auto It = SavedMoves.GetHead(); It != nullptr; It = It->GetNextNode())
+	if (SavedMoves.Num() == 0) return nullptr;
+
+	auto Node = SavedMoves.GetHead();
+	while (Node != nullptr && Node->GetValue().Time > Time)
 	{
-		if (It->GetValue().Time <= Time)
-		{
-			BestMove = It->GetValue();
-			break; 
-		}
+		Node = Node->GetNextNode();
 	}
-	return BestMove;
+	return Node;
+}
+
+FSavedMove ULagRewindComponent::GetInterpolatedMoveToTime(float Time)
+{
+	TDoubleLinkedList<FSavedMove>::TDoubleLinkedListNode* NodeA = GetNodeBeforeTime(Time);
+    
+	// Si on n'a rien trouvé, c'est que le temps est trop vieux
+	if (!NodeA) 
+	{
+		FSavedMove InvalidMove;
+		InvalidMove.Time = -1.0f;
+		return InvalidMove;
+	}
+
+	// Trouver la frame juste APRÈS (Frame B)
+	auto NodeB = NodeA->GetPrevNode();
+
+	// Cas limites : Si on est pile sur une frame ou si on demande le futur
+	if (!NodeB || FMath::IsNearlyEqual(NodeA->GetValue().Time, Time))
+	{
+		return NodeA->GetValue();
+	}
+
+	// Logique d'interpolation entre FrameA et FrameB
+	const FSavedMove& FrameA = NodeA->GetValue();
+	const FSavedMove& FrameB = NodeB->GetValue();
+
+	// Alpha = (Temps Cible - Temps Début) / (Temps Fin - Temps Début)
+	float Denominator = FrameB.Time - FrameA.Time;
+	float Alpha = FMath::Clamp((Time - FrameA.Time) / Denominator, 0.0f, 1.0f);
+
+	FSavedMove InterpolatedMove;
+	InterpolatedMove.Time = Time;
+
+	// Blend gère le Lerp de la position/scale et le Slerp (quaternion) de la rotation
+	InterpolatedMove.Position.Blend(FrameA.Position, FrameB.Position, Alpha);
+
+	UE_LOG(LogLagRewindComponent, Log, TEXT("Interpolation Réussie: Temps visé: %f | Alpha: %f entre T1:%f et T2:%f"), 
+	   Time, Alpha, FrameA.Time, FrameB.Time);
+
+	return InterpolatedMove;
 }
 
 void ULagRewindComponent::DrawValidationHit(FTransform ActorTransformAtTime)
@@ -186,7 +239,7 @@ void ULagRewindComponent::DrawValidationHit(FTransform ActorTransformAtTime)
 		UE_LOG(LogLagRewindComponent, Log, TEXT("Client_DrawValidationHit: ShowRewindHit désactivé pas de shape tracé"));
 		return;
 	}
-	UE_LOG(LogLagRewindComponent, Log, TEXT("Client_DrawValidationHit: Dessin forcé par le serveur sur %s"), *GetOwner()->GetName());
+		UE_LOG(LogLagRewindComponent, Log, TEXT("Client_DrawValidationHit: Dessin forcé par le serveur sur %s"), *GetOwner()->GetName());
 
 	// On crée un SavedMove temporaire pour réutiliser ta fonction de dessin
 	FSavedMove TempMove;
