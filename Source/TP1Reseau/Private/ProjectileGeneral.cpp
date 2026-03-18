@@ -95,6 +95,8 @@ void AProjectileGeneral::OnProjectileOverlap(UPrimitiveComponent* OverlappedComp
 			if (UNetworkGameInstanceSubsystem* TimeSub = GetGameInstance()->GetSubsystem<UNetworkGameInstanceSubsystem>())
 			{
 				SyncTime = TimeSub->GetSyncedServerTime();
+				float STT = TimeSub->GetServerTripTime();
+				SyncTime -= STT;
 			}
             
 			// On exécute la fonction du composant

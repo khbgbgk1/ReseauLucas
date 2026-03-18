@@ -117,8 +117,13 @@ float UNetworkGameInstanceSubsystem::GetCurrentPing() const
 	return CurrentPing;
 }
 
+float UNetworkGameInstanceSubsystem::GetServerTripTime() const
+{
+	return CurrentPing/1000.0f; //time en seconds
+}
+
 bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigator,
-	AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation)
+                                                         AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation)
 {
 	if (!ActorToGetRewindShapeCollision) return false;
 

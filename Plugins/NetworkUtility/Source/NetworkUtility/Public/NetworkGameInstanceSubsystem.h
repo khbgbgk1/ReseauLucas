@@ -50,6 +50,9 @@ class NETWORKUTILITY_API UNetworkGameInstanceSubsystem : public UGameInstanceSub
 	UFUNCTION(BlueprintCallable)
 	float GetCurrentPing() const;
 	
+	UFUNCTION(BlueprintCallable)
+	float GetServerTripTime() const;
+	
 	//Rewind gestion
 	UFUNCTION(BlueprintCallable)
 	bool CheckActorsCollision(AActor* DamageInstigator, AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation);
