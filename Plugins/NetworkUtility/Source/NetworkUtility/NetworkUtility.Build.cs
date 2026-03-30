@@ -28,6 +28,7 @@ public class NetworkUtility : ModuleRules
 				"Core", "Engine",
 				"OnlineSubsystem", 
 				"OnlineSubsystemSteam",
+				"OnlineSubsystemUtils",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -42,6 +43,7 @@ public class NetworkUtility : ModuleRules
 				"SlateCore",
 				"OnlineSubsystem",
 				"OnlineSubsystemSteam",
+				"OnlineSubsystemUtils",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

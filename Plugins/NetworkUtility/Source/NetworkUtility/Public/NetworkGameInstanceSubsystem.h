@@ -7,6 +7,22 @@
 #include "Interfaces/OnlineSessionInterface.h"
 #include "NetworkGameInstanceSubsystem.generated.h"
 
+
+USTRUCT(BlueprintType)
+struct FSessionResultWrapper
+{
+	GENERATED_BODY()
+    
+	UPROPERTY(BlueprintReadOnly)
+	FString ServerName;
+    
+	int32 ResultIndex; // Index pour retrouver le résultat dans SessionSearch
+};
+
+// Delegate pour avertir le Widget que la recherche est finie
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFindSessionsComplete, const TArray<FSessionResultWrapper>&, Results);
+
+
 /**
  * 
  */
@@ -62,14 +78,34 @@ class NETWORKUTILITY_API UNetworkGameInstanceSubsystem : public UGameInstanceSub
 	//Gestion online Steam
 	
 	IOnlineSessionPtr SessionInterface;
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+	FName PendingStreamLevelName;
+	
+	UPROPERTY(editAnywhere, BlueprintReadWrite, Category="JoinSession")
+	int MAX_SEARCH_RESULTS = 100;
 	
 	UFUNCTION(BlueprintCallable)
-	void HostSessionBySteam(const TSoftObjectPtr<UWorld> Level);
+	void HostSessionBySteam(const TSoftObjectPtr<UWorld> Level, FString SessionName);
 	
 	UFUNCTION(BlueprintCallable)
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 	
-	FName PendingStreamLevelName;
+	UFUNCTION(BlueprintCallable)
+	void FindSessionsOnSteam();
+
+	UFUNCTION(BlueprintCallable)
+	void JoinSessionByIndex(int32 Index);
+
+	UPROPERTY(BlueprintAssignable)
+	FFindSessionsComplete OnFindSessionsCompleteEvent;
+
+	// --- ACHIEVEMENTS ---
+	UFUNCTION(BlueprintCallable)
+	void UpdateSteamAchievement(FName AchievementID, float Progress = 100.0f);
+	
+	void OnFindSessionsComplete(bool bWasSuccessful);
+	
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	
 private :
 	UPROPERTY()

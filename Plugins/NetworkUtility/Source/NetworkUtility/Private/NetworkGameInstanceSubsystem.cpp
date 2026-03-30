@@ -8,8 +8,13 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "OnlineStats.h" 
+#include "OnlineSubsystemUtils.h"
 #include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "Interfaces/OnlineAchievementsInterface.h"
 #include "OnlineSessionSettings.h"
+
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogNetworkGameInstanceSubsystem, Log, All);
@@ -203,7 +208,7 @@ bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigato
 	return false;
 }
 
-void UNetworkGameInstanceSubsystem::HostSessionBySteam(const TSoftObjectPtr<UWorld> Level)
+void UNetworkGameInstanceSubsystem::HostSessionBySteam(const TSoftObjectPtr<UWorld> Level, FString SessionName)
 {
 	PendingStreamLevelName = FName(*FPackageName::ObjectPathToPackageName(Level.ToString()));
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(STEAM); // Penser a mettre dans le build en shipping TonDossierDeBuild/Windows/TonNomDeProjet/Binaries/Win64/ le fichier steam_appid.txt avec le ID dev pour nous 480
@@ -227,6 +232,7 @@ void UNetworkGameInstanceSubsystem::HostSessionBySteam(const TSoftObjectPtr<UWor
 			SessionSettings.bShouldAdvertise = true;
             
 			SessionSettings.Set(FName("MatchType"), FString("PadreLudos_Pigeon_2003_07"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+			SessionSettings.Set(FName("ServerName"), SessionName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 			// Liaison du delegate et création
 			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &ThisClass::OnCreateSessionComplete);
@@ -249,6 +255,113 @@ void UNetworkGameInstanceSubsystem::OnCreateSessionComplete(FName SessionName, b
 		} else
 		{
 				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("OnCreateSessionComplete: PendingStreamLevelName non valide"));
+		}
+	}
+}
+
+void UNetworkGameInstanceSubsystem::FindSessionsOnSteam()
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(STEAM);
+	if (!Subsystem)
+	{
+		UE_LOG(LogNetworkGameInstanceSubsystem, Error, TEXT("STEAM SUBSYSTEM INTROUVABLE ! Vérifie que Steam est lancé."));
+		return;
+	};
+
+	SessionInterface = Subsystem->GetSessionInterface();
+	if (SessionInterface.IsValid())
+	{
+		SessionSearch = MakeShareable(new FOnlineSessionSearch());
+		SessionSearch->bIsLanQuery = false; 
+		SessionSearch->MaxSearchResults = MAX_SEARCH_RESULTS;
+			SessionSearch->QuerySettings.Set(FName(TEXT("PRESENCESEARCH")), true, EOnlineComparisonOp::Equals);
+
+		// FILTRE CRUCIAL : On ne veut que les sessions qui correspondent au MatchType du TP
+		SessionSearch->QuerySettings.Set(FName("MatchType"), FString("PadreLudos_Pigeon_2003_07"), EOnlineComparisonOp::Equals);
+
+		SessionInterface->OnFindSessionsCompleteDelegates.AddUObject(this, &ThisClass::OnFindSessionsComplete);
+        
+		UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Steam: Recherche de sessions lancée..."));
+		SessionInterface->FindSessions(0, SessionSearch.ToSharedRef());
+	}
+}
+
+void UNetworkGameInstanceSubsystem::JoinSessionByIndex(int32 Index)
+{
+	if (!SessionInterface.IsValid() || !SessionSearch.IsValid()) return;
+    
+	// Sécurité sur l'index
+	if (Index >= 0 && Index < SessionSearch->SearchResults.Num())
+	{
+		SessionInterface->OnJoinSessionCompleteDelegates.AddUObject(this, &ThisClass::OnJoinSessionComplete);
+        
+		UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Steam: Tentative de rejoindre la session à l'index %d"), Index);
+		SessionInterface->JoinSession(0, NAME_GameSession, SessionSearch->SearchResults[Index]);
+	}
+}
+
+void UNetworkGameInstanceSubsystem::UpdateSteamAchievement(FName AchievementID, float Progress)
+{
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(STEAM);
+	if (!Subsystem)
+	{
+		UE_LOG(LogNetworkGameInstanceSubsystem, Error, TEXT("STEAM SUBSYSTEM INTROUVABLE ! Vérifie que Steam est lancé."));
+		return;
+	}
+
+	IOnlineAchievementsPtr Achievements = Subsystem->GetAchievementsInterface();
+	if (Achievements.IsValid())
+	{
+		ULocalPlayer* LP = GetGameInstance()->GetFirstGamePlayer();
+		if (LP)
+		{
+			FUniqueNetIdPtr UserId = LP->GetPreferredUniqueNetId().GetUniqueNetId();
+			if (UserId.IsValid())
+			{
+				FOnlineAchievementsWriteRef AchievementWrite = MakeShared<FOnlineAchievementsWrite>();
+				AchievementWrite->SetFloatStat(AchievementID.ToString(), Progress);
+
+				FOnAchievementsWrittenDelegate Delegate = FOnAchievementsWrittenDelegate::CreateLambda([](const FUniqueNetId& Id, bool bSuccess)
+				{
+					UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Achievement Update Success: %s"), bSuccess ? TEXT("TRUE") : TEXT("FALSE"));
+				});
+
+				Achievements->WriteAchievements(*UserId, AchievementWrite, Delegate);
+			}
+		}
+	}
+}
+
+void UNetworkGameInstanceSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	TArray<FSessionResultWrapper> UIResults;
+	if (bWasSuccessful && SessionSearch.IsValid())
+	{
+		for (int32 i = 0; i < SessionSearch->SearchResults.Num(); ++i)
+		{
+			FSessionResultWrapper Result;
+			// On récupère le nom unique qu'on a mis au Host
+			SessionSearch->SearchResults[i].Session.SessionSettings.Get(FName("ServerName"), Result.ServerName);
+			Result.ResultIndex = i;
+			UIResults.Add(Result);
+		}
+	}
+	OnFindSessionsCompleteEvent.Broadcast(UIResults);
+}
+
+void UNetworkGameInstanceSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (Result == EOnJoinSessionCompleteResult::Success)
+	{
+		FString ConnectString;
+		if (SessionInterface->GetResolvedConnectString(SessionName, ConnectString))
+		{
+			APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
+			if (PC)
+			{
+				FString URL = ConnectString + FString::Printf(TEXT("?Skin=%d"), SelectedSkin);
+				PC->ClientTravel(URL, TRAVEL_Absolute);
+			}
 		}
 	}
 }

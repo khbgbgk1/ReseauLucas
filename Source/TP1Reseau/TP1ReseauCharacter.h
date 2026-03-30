@@ -64,6 +64,15 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* PauseMenuAction;
+	
+	//Achievement
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* WinAchievementAction;
+
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* LoseAchievementAction;
+
+	
 
 public:
 
@@ -156,6 +165,21 @@ public:
 	void OnRep_CurrentWeapon();
 	
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	
+	UFUNCTION(BlueprintCallable)
+	void RequestWinSuccess();
+	
+	UFUNCTION(BlueprintCallable)
+	void RequestLoseSuccess();
+	
+	UFUNCTION(BlueprintCallable)
+	void RequestUpdateSuccess(float Progress);
+	
+	UFUNCTION(Server, Reliable)
+	void Server_UpdateAchievement(float Progress);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Replicated)
+	FName AchievementName = "ACH_WIN_ONE_GAME";
 
 public:
 

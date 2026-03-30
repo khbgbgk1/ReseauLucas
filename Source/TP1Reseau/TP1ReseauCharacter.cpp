@@ -138,6 +138,22 @@ void ATP1ReseauCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("SetupPlayerInputComponent: PauseMenuAction manquant."));
             			
 		}
+		
+		if (WinAchievementAction)
+		{
+			EnhancedInputComponent->BindAction(WinAchievementAction, ETriggerEvent::Started, this, &ATP1ReseauCharacter::RequestWinSuccess);
+		}else {
+			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("SetupPlayerInputComponent: WinAchievementAction manquant."));
+            			
+		}
+		
+		if (LoseAchievementAction)
+		{
+			EnhancedInputComponent->BindAction(LoseAchievementAction, ETriggerEvent::Started, this, &ATP1ReseauCharacter::RequestLoseSuccess);
+		}else {
+			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("SetupPlayerInputComponent: LoseAchievementAction manquant."));
+            			
+		}
 	}
 	else
 	{
@@ -376,6 +392,34 @@ void ATP1ReseauCharacter::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(ATP1ReseauCharacter, CurrentWeapon);
 	DOREPLIFETIME(ATP1ReseauCharacter, CurrentHealth);
+}
+
+void ATP1ReseauCharacter::RequestWinSuccess()
+{
+	RequestUpdateSuccess(100.0f);
+}
+
+void ATP1ReseauCharacter::RequestLoseSuccess()
+{
+	RequestUpdateSuccess(0.0f);
+}
+
+void ATP1ReseauCharacter::RequestUpdateSuccess(float Progress)
+{
+	if(HasAuthority())
+	{
+		// Le serveur demande au Subsystem de mettre à jour pour ce joueur
+		if (UNetworkGameInstanceSubsystem* NetSub = GetGameInstance()->GetSubsystem<UNetworkGameInstanceSubsystem>())
+		{
+			NetSub->UpdateSteamAchievement(AchievementName, Progress);
+		}
+	}
+	Server_UpdateAchievement(Progress);
+}
+
+void ATP1ReseauCharacter::Server_UpdateAchievement_Implementation(float Progress)
+{
+	RequestUpdateSuccess(Progress);
 }
 
 void ATP1ReseauCharacter::OnRep_CurrentWeapon()
