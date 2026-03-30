@@ -26,6 +26,8 @@ public class NetworkUtility : ModuleRules
 			new string[]
 			{
 				"Core", "Engine",
+				"OnlineSubsystem", 
+				"OnlineSubsystemSteam",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -38,6 +40,8 @@ public class NetworkUtility : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
+				"OnlineSubsystem",
+				"OnlineSubsystemSteam",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

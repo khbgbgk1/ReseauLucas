@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
 #include "NetworkGameInstanceSubsystem.generated.h"
 
 /**
@@ -56,6 +57,19 @@ class NETWORKUTILITY_API UNetworkGameInstanceSubsystem : public UGameInstanceSub
 	//Rewind gestion
 	UFUNCTION(BlueprintCallable)
 	bool CheckActorsCollision(AActor* DamageInstigator, AActor* ActorToGetRewindShapeCollision, float HitTime, FVector HitLocation, FVector StartLocation);
+	
+	
+	//Gestion online Steam
+	
+	IOnlineSessionPtr SessionInterface;
+	
+	UFUNCTION(BlueprintCallable)
+	void HostSessionBySteam(const TSoftObjectPtr<UWorld> Level);
+	
+	UFUNCTION(BlueprintCallable)
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+	
+	FName PendingStreamLevelName;
 	
 private :
 	UPROPERTY()

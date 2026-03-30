@@ -8,6 +8,8 @@
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "OnlineSubsystem.h"
+#include "OnlineSessionSettings.h"
 #include "Net/UnrealNetwork.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogNetworkGameInstanceSubsystem, Log, All);
@@ -199,4 +201,54 @@ bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigato
 		}
 	}
 	return false;
+}
+
+void UNetworkGameInstanceSubsystem::HostSessionBySteam(const TSoftObjectPtr<UWorld> Level)
+{
+	PendingStreamLevelName = FName(*FPackageName::ObjectPathToPackageName(Level.ToString()));
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(TEXT("Steam")); // Penser a mettre dans le build en shipping TonDossierDeBuild/Windows/TonNomDeProjet/Binaries/Win64/ le fichier steam_appid.txt avec le ID dev pour nous 480
+	if (Subsystem)
+	{
+		SessionInterface = Subsystem->GetSessionInterface();
+		if (SessionInterface.IsValid())
+		{
+			FOnlineSessionSettings SessionSettings;
+			SessionSettings.bIsDedicated= false;
+			SessionSettings.bIsLANMatch = false; 
+			
+			SessionSettings.NumPublicConnections = 4;
+			
+			SessionSettings.bAllowJoinInProgress = true;
+			SessionSettings.bAllowJoinViaPresence = true; //Tester false
+			SessionSettings.bUseLobbiesIfAvailable= true; 
+			SessionSettings.bAllowInvites= true;
+			
+			SessionSettings.bUsesPresence = true;
+			SessionSettings.bShouldAdvertise = true;
+            
+			SessionSettings.Set(FName("MatchType"), FString("PadreLudos_Pigeon_2003_07"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+
+			// Liaison du delegate et création
+			SessionInterface->OnCreateSessionCompleteDelegates.AddUObject(this, &ThisClass::OnCreateSessionComplete);
+			SessionInterface->CreateSession(0, NAME_GameSession, SessionSettings); // [cite: 243]
+		}
+	}else
+	{
+		UE_LOG(LogNetworkGameInstanceSubsystem, Error, TEXT("STEAM SUBSYSTEM INTROUVABLE ! Vérifie que Steam est lancé."));
+	}
+}
+
+void UNetworkGameInstanceSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (bWasSuccessful)
+	{
+		// Voyage vers le lobby en mode listen [cite: 246]
+		if (PendingStreamLevelName.IsValid())
+		{
+			UGameplayStatics::OpenLevel(GetWorld(), PendingStreamLevelName, true, "listen");
+		} else
+		{
+				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("OnCreateSessionComplete: PendingStreamLevelName non valide"));
+		}
+	}
 }
