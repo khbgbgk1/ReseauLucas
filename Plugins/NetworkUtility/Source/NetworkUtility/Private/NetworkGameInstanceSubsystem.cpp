@@ -300,6 +300,30 @@ void UNetworkGameInstanceSubsystem::JoinSessionByIndex(int32 Index)
 	}
 }
 
+void UNetworkGameInstanceSubsystem::InitializeAchievements(APlayerController* PC)
+{
+	if (!PC || !PC->GetLocalPlayer()) return;
+
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(STEAM);
+	if (Subsystem)
+	{
+		IOnlineAchievementsPtr Achievements = Subsystem->GetAchievementsInterface();
+		FUniqueNetIdPtr UserId = PC->GetLocalPlayer()->GetPreferredUniqueNetId().GetUniqueNetId();
+
+		if (Achievements.IsValid() && UserId.IsValid())
+		{
+			UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Initialisation des succès pour le joueur : %s"), *UserId->ToString());
+            
+			FOnQueryAchievementsCompleteDelegate Delegate;
+			Delegate.BindLambda([](const FUniqueNetId& Id, bool bSuccess) {
+				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Steam Cache Status: %s"), bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"));
+			});
+
+			Achievements->QueryAchievements(*UserId, Delegate);
+		}
+	}
+}
+
 void UNetworkGameInstanceSubsystem::UpdateSteamAchievement(FName AchievementID, float Progress)
 {
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(STEAM);
@@ -318,7 +342,8 @@ void UNetworkGameInstanceSubsystem::UpdateSteamAchievement(FName AchievementID, 
 			FUniqueNetIdPtr UserId = LP->GetPreferredUniqueNetId().GetUniqueNetId();
 			if (UserId.IsValid())
 			{
-				FOnlineAchievementsWriteRef AchievementWrite = MakeShared<FOnlineAchievementsWrite>();
+				//FOnlineAchievementsWriteRef AchievementWrite = MakeShared<FOnlineAchievementsWrite>();
+				TSharedRef<FOnlineAchievementsWrite> AchievementWrite = MakeShared<FOnlineAchievementsWrite>();
 				AchievementWrite->SetFloatStat(AchievementID.ToString(), Progress);
 
 				FOnAchievementsWrittenDelegate Delegate = FOnAchievementsWrittenDelegate::CreateLambda([](const FUniqueNetId& Id, bool bSuccess)

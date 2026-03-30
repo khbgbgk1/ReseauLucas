@@ -101,6 +101,9 @@ class NETWORKUTILITY_API UNetworkGameInstanceSubsystem : public UGameInstanceSub
 
 	// --- ACHIEVEMENTS ---
 	UFUNCTION(BlueprintCallable)
+	void InitializeAchievements(APlayerController* PC);
+	
+	UFUNCTION(BlueprintCallable)
 	void UpdateSteamAchievement(FName AchievementID, float Progress = 100.0f);
 	
 	void OnFindSessionsComplete(bool bWasSuccessful);

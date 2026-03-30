@@ -415,8 +415,10 @@ void ATP1ReseauCharacter::RequestUpdateSuccess(float Progress)
 		{
 			NetSub->UpdateSteamAchievement(AchievementName, Progress);
 		}
+	} else
+	{
+		Server_UpdateAchievement(Progress);
 	}
-	Server_UpdateAchievement(Progress);
 }
 
 void ATP1ReseauCharacter::Server_UpdateAchievement_Implementation(float Progress)

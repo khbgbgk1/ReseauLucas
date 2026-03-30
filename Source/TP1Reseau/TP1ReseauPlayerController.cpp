@@ -41,6 +41,13 @@ void ATP1ReseauPlayerController::BeginPlay()
 		}
 
 	}
+	
+	
+	if (UNetworkGameInstanceSubsystem* NetSub = GetGameInstance()->GetSubsystem<UNetworkGameInstanceSubsystem>())
+	{
+		// Ici, le LocalPlayer existe forcément !
+		NetSub->InitializeAchievements(this);
+	}
 }
 
 void ATP1ReseauPlayerController::SetupInputComponent()
