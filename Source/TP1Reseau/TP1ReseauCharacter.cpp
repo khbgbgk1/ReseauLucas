@@ -309,11 +309,13 @@ void ATP1ReseauCharacter::OpenClosePauseMenu()
 		{
 			// Fermer le menu pause et réafficher le HUD de jeu
 			MyHUD->PrintPauseMenu(false);
+			MyHUD->PrintPlayerHUD(true);
 			PC->bShowMouseCursor = false;
 		}
 		else
 		{
 			// Ouvrir le menu pause et masquer le HUD de jeu
+			MyHUD->PrintPlayerHUD(false);
 			MyHUD->PrintPauseMenu(true);
 			PC->bShowMouseCursor = true;
 		}
