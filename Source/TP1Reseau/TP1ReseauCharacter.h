@@ -61,6 +61,9 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	UInputAction* FireAction;
+	
+	UPROPERTY(EditAnywhere, Category="Input")
+	UInputAction* PauseMenuAction;
 
 public:
 
@@ -143,6 +146,9 @@ public:
 	virtual void DoFire();
 	UFUNCTION(BlueprintCallable, Category="Input")
 	virtual void StopFiring();
+	
+	UFUNCTION(BlueprintCallable, Category="Input")
+	void OpenClosePauseMenu();
 	
 	virtual void OnRep_PlayerState() override;
 	

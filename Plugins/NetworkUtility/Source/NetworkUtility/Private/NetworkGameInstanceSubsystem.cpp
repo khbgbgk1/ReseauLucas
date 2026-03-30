@@ -206,7 +206,7 @@ bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigato
 void UNetworkGameInstanceSubsystem::HostSessionBySteam(const TSoftObjectPtr<UWorld> Level)
 {
 	PendingStreamLevelName = FName(*FPackageName::ObjectPathToPackageName(Level.ToString()));
-	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(TEXT("Steam")); // Penser a mettre dans le build en shipping TonDossierDeBuild/Windows/TonNomDeProjet/Binaries/Win64/ le fichier steam_appid.txt avec le ID dev pour nous 480
+	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(STEAM); // Penser a mettre dans le build en shipping TonDossierDeBuild/Windows/TonNomDeProjet/Binaries/Win64/ le fichier steam_appid.txt avec le ID dev pour nous 480
 	if (Subsystem)
 	{
 		SessionInterface = Subsystem->GetSessionInterface();

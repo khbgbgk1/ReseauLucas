@@ -74,6 +74,8 @@ class NETWORKUTILITY_API UNetworkGameInstanceSubsystem : public UGameInstanceSub
 private :
 	UPROPERTY()
 	float CurrentPing = 0.0f;
+	
+	const FName STEAM = "Steam";
 };
 
 

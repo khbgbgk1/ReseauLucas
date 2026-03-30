@@ -13,16 +13,25 @@ UCLASS()
 class TP1RESEAU_API ANetworkTPHUD : public AHUD
 {
 	GENERATED_BODY()
-	
+public:
 	UPROPERTY(EditAnywhere, Category = "UI")
 	TSubclassOf<UUserWidget> PlayerHUDClass;
 	
 	UPROPERTY()
 	UUserWidget* PlayerHUDWidget;
+	
+	UPROPERTY(EditAnywhere, Category = "UI")
+	TSubclassOf<UUserWidget>PauseMenuClass;
+	
+	UPROPERTY()
+	UUserWidget* PauseMenuWidget;
 
 	// Fonction pour afficher/cacher le menu
 	UFUNCTION(BlueprintCallable, Category = "UI")
 	void PrintPlayerHUD(bool bShow);
+	
+	UFUNCTION(BlueprintCallable, Category = "UI")
+	void PrintPauseMenu(bool bShow);
 	
 protected:
 	virtual void BeginPlay() override;

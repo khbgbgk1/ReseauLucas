@@ -10,10 +10,12 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "NetworkTPHUD.h"
 #include "TP1PlayerState.h"
 #include "GameFramework/GameModeBase.h"
 #include "TP1Reseau.h"
 #include "TP1ReseauPlayerController.h"
+#include "Blueprint/UserWidget.h"
 #include "GameMode/GameMapGameMode.h"
 #include "Net/UnrealNetwork.h"
 
@@ -129,6 +131,13 @@ void ATP1ReseauCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
             			
 		}
 		
+		if (PauseMenuAction)
+		{
+			EnhancedInputComponent->BindAction(PauseMenuAction, ETriggerEvent::Started, this, &ATP1ReseauCharacter::OpenClosePauseMenu);
+		}else {
+			UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("SetupPlayerInputComponent: PauseMenuAction manquant."));
+            			
+		}
 	}
 	else
 	{
@@ -265,6 +274,33 @@ void ATP1ReseauCharacter::StopFiring()
 	}else
 	{
 		UE_LOG(LogTP1ReseauCharacter, Warning, TEXT("StopFiring:CurrentWeapon nullptr"));
+	}
+}
+
+void ATP1ReseauCharacter::OpenClosePauseMenu()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC) return;
+
+	// 2. Récupérer le HUD et le caster vers ta classe spécifique
+	ANetworkTPHUD* MyHUD = Cast<ANetworkTPHUD>(PC->GetHUD());
+    
+	if (MyHUD)
+	{
+		bool bIsMenuVisible = MyHUD->PauseMenuWidget && MyHUD->PauseMenuWidget->IsVisible();
+
+		if (bIsMenuVisible)
+		{
+			// Fermer le menu pause et réafficher le HUD de jeu
+			MyHUD->PrintPauseMenu(false);
+			PC->bShowMouseCursor = false;
+		}
+		else
+		{
+			// Ouvrir le menu pause et masquer le HUD de jeu
+			MyHUD->PrintPauseMenu(true);
+			PC->bShowMouseCursor = true;
+		}
 	}
 }
 

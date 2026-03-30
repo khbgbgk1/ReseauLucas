@@ -18,11 +18,26 @@ void ANetworkTPHUD::BeginPlay()
 			PlayerHUDWidget->SetVisibility(ESlateVisibility::Visible); 
 		}
 	}
+	
+	if (PauseMenuClass)
+	{
+		PauseMenuWidget = CreateWidget<UUserWidget>(GetWorld(), PauseMenuClass);
+		if (PauseMenuWidget)
+		{
+			PauseMenuWidget->AddToViewport();
+			PauseMenuWidget->SetVisibility(ESlateVisibility::Hidden); 
+		}
+	}
 }
 
 void ANetworkTPHUD::PrintPlayerHUD(bool bShow)
 {
 	PrintUI(bShow,PlayerHUDWidget);
+}
+
+void ANetworkTPHUD::PrintPauseMenu(bool bShow)
+{
+	PrintUI(bShow,PauseMenuWidget);
 }
 
 void ANetworkTPHUD::PrintUI(bool bShow,UUserWidget* UserWidget)
