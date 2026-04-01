@@ -211,7 +211,10 @@ bool UNetworkGameInstanceSubsystem::CheckActorsCollision(AActor* DamageInstigato
 void UNetworkGameInstanceSubsystem::HostSessionBySteam(const TSoftObjectPtr<UWorld> Level, FString SessionName)
 {
 	PendingStreamLevelName = FName(*FPackageName::ObjectPathToPackageName(Level.ToString()));
+	UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("HOST : Préparation de la session sur la map : %s"), *PendingStreamLevelName.ToString());
+	
 	IOnlineSubsystem* Subsystem = IOnlineSubsystem::Get(STEAM); // Penser a mettre dans le build en shipping TonDossierDeBuild/Windows/TonNomDeProjet/Binaries/Win64/ le fichier steam_appid.txt avec le ID dev pour nous 480
+	
 	if (Subsystem)
 	{
 		SessionInterface = Subsystem->GetSessionInterface();
@@ -231,6 +234,8 @@ void UNetworkGameInstanceSubsystem::HostSessionBySteam(const TSoftObjectPtr<UWor
 			SessionSettings.bUsesPresence = true;
 			SessionSettings.bShouldAdvertise = true;
             
+			SessionSettings.Set(FName("MAPNAME"), PendingStreamLevelName.ToString(), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+			
 			SessionSettings.Set(FName("MatchType"), FString("PadreLudos_Pigeon_2003_07"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 			SessionSettings.Set(FName("ServerName"), SessionName, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
@@ -251,7 +256,11 @@ void UNetworkGameInstanceSubsystem::OnCreateSessionComplete(FName SessionName, b
 		// Voyage vers le lobby en mode listen [cite: 246]
 		if (PendingStreamLevelName.IsValid())
 		{
-			UGameplayStatics::OpenLevel(GetWorld(), PendingStreamLevelName, true, "listen");
+            FString SkinValue = FString::Printf(TEXT("?Skin=%d"), SelectedSkin);
+            const FString Options = TEXT("?listen"); 
+            FString URL = PendingStreamLevelName.ToString() + Options + SkinValue;
+			
+			UGameplayStatics::OpenLevel(GetWorld(), PendingStreamLevelName, true, URL);
 		} else
 		{
 				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("OnCreateSessionComplete: PendingStreamLevelName non valide"));
@@ -384,7 +393,9 @@ void UNetworkGameInstanceSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 			APlayerController* PC = GetGameInstance()->GetFirstLocalPlayerController();
 			if (PC)
 			{
+				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("ConnectString reccupéré: %s"), *ConnectString);
 				FString URL = ConnectString + FString::Printf(TEXT("?Skin=%d"), SelectedSkin);
+				UE_LOG(LogNetworkGameInstanceSubsystem, Log, TEXT("Connexion pour l'URL: %s"), *URL);
 				PC->ClientTravel(URL, TRAVEL_Absolute);
 			}
 		}

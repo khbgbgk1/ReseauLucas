@@ -20,7 +20,10 @@ public class TP1Reseau : ModuleRules
 			"UMG",
 			"Slate",
 			"NetworkUtility",
-			"SkinManagerPlugin"
+			"SkinManagerPlugin",
+			"OnlineSubsystem", 
+			"OnlineSubsystemSteam",
+			"OnlineSubsystemUtils",
 		});
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
